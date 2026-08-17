@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { Project, MaterialRequirement, OrderRequest, DeliveryJob, ProjectLedgerEvent } from '../../types';
+import { Project, MaterialRequirement, OrderRequest, ProjectLedgerEvent } from '../../types';
 import { Badge } from './Badge';
-import { Building2, ShoppingBag, Truck, CheckCircle2, ShieldCheck, ArrowRight, UserCheck, Clock, FileSpreadsheet, Plus } from 'lucide-react';
+import { Building2, ShoppingBag, ListOrdered, Clock, Layers, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 export const ConnectedProjectView: React.FC = () => {
-  const { currentUser } = useAuth();
+  const [activeTab, setActiveTab] = useState<'overview' | 'materials' | 'orders' | 'ledger'>('overview');
 
   const project: Project = {
     id: 'prj-101',
@@ -25,7 +24,7 @@ export const ConnectedProjectView: React.FC = () => {
     createdAt: '2026-02-01T09:00:00.000Z'
   };
 
-  const [materialRequirements, setMaterialRequirements] = useState<MaterialRequirement[]>([
+  const materialRequirements: MaterialRequirement[] = [
     {
       id: 'req-101',
       projectId: 'prj-101',
@@ -66,9 +65,9 @@ export const ConnectedProjectView: React.FC = () => {
       status: 'ORDERED',
       createdAt: '2026-08-08T09:00:00.000Z'
     }
-  ]);
+  ];
 
-  const [orders, setOrders] = useState<OrderRequest[]>([
+  const orders: OrderRequest[] = [
     {
       id: 'ORD-1042',
       projectId: 'prj-101',
@@ -98,9 +97,9 @@ export const ConnectedProjectView: React.FC = () => {
       createdAt: '2026-08-17T10:00:00.000Z',
       notes: '500 bags ordered. 350 delivered in tranche 1, 150 bags pending in tranche 2.'
     }
-  ]);
+  ];
 
-  const [ledger, setLedger] = useState<ProjectLedgerEvent[]>([
+  const ledger: ProjectLedgerEvent[] = [
     {
       id: 'ledg-5',
       projectId: 'prj-101',
@@ -156,160 +155,188 @@ export const ConnectedProjectView: React.FC = () => {
       description: 'Rajesh Kumar created Sharma Residence project (Budget ₹45,00,000)',
       timestamp: '2026-02-01T09:00:00.000Z'
     }
-  ]);
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Connected Project Banner */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+    <div className="space-y-8 max-w-6xl mx-auto">
+      {/* Hero Calm Project Header */}
+      <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-2xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-100">
-              One Project • Three Connected Users • Single Source of Truth
-            </span>
-            <h1 className="text-xl font-bold text-slate-900 mt-1">{project.name}</h1>
-            <p className="text-xs text-slate-500">{project.location}</p>
+            <div className="flex items-center space-x-2">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+              <span className="text-xs font-semibold text-slate-500">Connected Project Hub</span>
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">{project.name}</h1>
+            <p className="text-xs text-slate-400 mt-1">{project.location}</p>
           </div>
           <Badge status={project.status} />
         </div>
 
-        {/* Connected Roles Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-100 text-xs">
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <span className="text-slate-400 font-medium block">Project House Owner</span>
-            <p className="font-bold text-slate-900">{project.homeownerName}</p>
-            <span className="text-[11px] text-emerald-600 font-semibold">Central Controller</span>
+        {/* 3 Connected Roles Pill Summary */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100 text-xs">
+          <div>
+            <span className="text-slate-400 block font-medium">House Owner</span>
+            <p className="font-bold text-slate-900 mt-0.5">{project.homeownerName}</p>
           </div>
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <span className="text-slate-400 font-medium block">Assigned Contractor</span>
-            <p className="font-bold text-slate-900">{project.builderName}</p>
-            <span className="text-[11px] text-blue-600 font-semibold">Verified Builder (14 Yrs Exp)</span>
+          <div>
+            <span className="text-slate-400 block font-medium">Assigned Contractor</span>
+            <p className="font-bold text-slate-900 mt-0.5">{project.builderName}</p>
           </div>
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-            <span className="text-slate-400 font-medium block">Active Material Suppliers</span>
-            <p className="font-bold text-slate-900">UltraTech Depot + Jindal Steel</p>
-            <span className="text-[11px] text-indigo-600 font-semibold">Multi-Supplier Network</span>
+          <div>
+            <span className="text-slate-400 block font-medium">Material Suppliers</span>
+            <p className="font-bold text-slate-900 mt-0.5">UltraTech Depot + Jindal Steel</p>
           </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex items-center space-x-2 border-t border-slate-100 pt-6">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === 'overview'
+                ? 'bg-slate-900 text-white font-bold shadow-2xs'
+                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            Project Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('materials')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === 'materials'
+                ? 'bg-slate-900 text-white font-bold shadow-2xs'
+                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            Material Requirements ({materialRequirements.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === 'orders'
+                ? 'bg-slate-900 text-white font-bold shadow-2xs'
+                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            Connected Orders ({orders.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('ledger')}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              activeTab === 'ledger'
+                ? 'bg-slate-900 text-white font-bold shadow-2xs'
+                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            Project Ledger ({ledger.length})
+          </button>
         </div>
       </div>
 
-      {/* Multi-Supplier Material Procurement Transparency */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900">Connected Material Procurement Transparency</h3>
-            <p className="text-xs text-slate-500">Contractor requirements matched against shopkeeper supplies</p>
+      {/* Tab Content Areas */}
+      {activeTab === 'overview' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-2xs space-y-2">
+            <span className="text-xs font-semibold text-slate-400">Total Project Budget</span>
+            <p className="text-2xl font-bold text-slate-900 font-tabular">₹{project.totalBudget.toLocaleString('en-IN')}</p>
+            <p className="text-xs text-slate-400">₹{project.spentCost.toLocaleString('en-IN')} spent • ₹{project.committedCost.toLocaleString('en-IN')} committed</p>
           </div>
-          <span className="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-xl">
-            {materialRequirements.length} Active Requirements
-          </span>
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-2xs space-y-2">
+            <span className="text-xs font-semibold text-slate-400">Active Material Orders</span>
+            <p className="text-2xl font-bold text-blue-600 font-tabular">{orders.length} Active</p>
+            <p className="text-xs text-slate-400">UltraTech PPC Cement (350 delivered, 150 pending)</p>
+          </div>
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-2xs space-y-2">
+            <span className="text-xs font-semibold text-slate-400">Single Source of Truth</span>
+            <p className="text-2xl font-bold text-emerald-600 font-tabular">100% Synced</p>
+            <p className="text-xs text-slate-400">Shared between Owner, Contractor & Shopkeeper</p>
+          </div>
         </div>
+      )}
 
+      {activeTab === 'materials' && (
         <div className="space-y-4">
           {materialRequirements.map((req) => (
-            <div key={req.id} className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div key={req.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-2xs space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900">{req.itemName}</h4>
-                  <p className="text-xs text-slate-500">Requested by: {req.contractorName} • {req.specification}</p>
+                  <h3 className="font-bold text-sm text-slate-900">{req.itemName}</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Requested by {req.contractorName}</p>
                 </div>
                 <Badge status={req.status} />
               </div>
 
-              {/* Connected Procurement Quantities */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3 rounded-lg border border-slate-200 text-xs font-medium">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-slate-50/70 rounded-2xl text-xs">
                 <div>
-                  <span className="text-slate-400 block">Required Qty:</span>
-                  <span className="font-bold text-slate-900">{req.requiredQty} {req.unit}s</span>
+                  <span className="text-slate-400 block font-medium">Required:</span>
+                  <span className="font-bold text-slate-900 mt-0.5 block">{req.requiredQty} {req.unit}s</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Ordered Qty:</span>
-                  <span className="font-bold text-amber-600">{req.orderedQty} {req.unit}s</span>
+                  <span className="text-slate-400 block font-medium">Ordered:</span>
+                  <span className="font-bold text-amber-600 mt-0.5 block">{req.orderedQty} {req.unit}s</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Delivered Qty:</span>
-                  <span className="font-bold text-emerald-700">{req.deliveredQty} {req.unit}s</span>
+                  <span className="text-slate-400 block font-medium">Delivered:</span>
+                  <span className="font-bold text-emerald-600 mt-0.5 block">{req.deliveredQty} {req.unit}s</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Remaining Gap:</span>
-                  <span className="font-bold text-blue-600">{req.remainingQty} {req.unit}s</span>
+                  <span className="text-slate-400 block font-medium">Remaining Gap:</span>
+                  <span className="font-bold text-blue-600 mt-0.5 block">{req.remainingQty} {req.unit}s</span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-slate-600 pt-1">
-                <span>Selected Shopkeeper: <b className="text-slate-900">{req.selectedDealerName}</b></span>
-                <span className="text-slate-500 font-tabular">Estimated Unit Price: ₹{req.estimatedUnitPrice} / {req.unit}</span>
+              <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                <span>Selected Supplier: <b className="text-slate-800">{req.selectedDealerName}</b></span>
+                <span>Unit Price: <b className="text-slate-800">₹{req.estimatedUnitPrice} / {req.unit}</b></span>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      )}
 
-      {/* Shared Order Records (Single Record — Multiple Views) */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-        <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">Unified Connected Orders</h3>
-        {orders.map((ord) => (
-          <div key={ord.id} className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <h4 className="font-bold text-sm text-slate-900">Order #{ord.id}</h4>
-                <p className="text-xs text-slate-500">
-                  Contractor: {ord.contractorName} • Shopkeeper: {ord.dealerName}
-                </p>
+      {activeTab === 'orders' && (
+        <div className="space-y-4">
+          {orders.map((ord) => (
+            <div key={ord.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-2xs space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900">Order #{ord.id}</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Supplier: {ord.dealerName}</p>
+                </div>
+                <Badge status={ord.status} />
               </div>
-              <Badge status={ord.status} />
-            </div>
 
-            <div className="p-3 bg-white rounded-lg border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
-              <div>
-                <span className="font-bold text-slate-900">{ord.items[0].productName}</span>
-                <p className="text-slate-500">
-                  Ordered: {ord.items[0].quantity} bags • Delivered: {ord.items[0].deliveredQuantity} bags (Tranche 1)
-                </p>
+              <div className="p-4 bg-slate-50/70 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs">
+                <div>
+                  <span className="font-bold text-slate-900 block">{ord.items[0].productName}</span>
+                  <span className="text-slate-500 mt-0.5 block">500 ordered • 350 delivered (Tranche 1)</span>
+                </div>
+                <span className="text-base font-bold text-emerald-700 font-tabular">₹{ord.totalAmount.toLocaleString('en-IN')}</span>
               </div>
-              <span className="font-bold text-emerald-700 text-sm font-tabular">₹{ord.totalAmount.toLocaleString('en-IN')}</span>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Unified Single Source of Truth Project Ledger */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900">Unified Project Ledger Timeline</h3>
-            <p className="text-xs text-slate-500">Single chronological history of all owner, contractor & shopkeeper events</p>
-          </div>
-          <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-3 py-1 rounded-xl">
-            Single Source of Truth
-          </span>
+          ))}
         </div>
+      )}
 
-        <div className="divide-y divide-slate-100">
+      {activeTab === 'ledger' && (
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-2xs overflow-hidden divide-y divide-slate-100">
           {ledger.map((evt) => (
-            <div key={evt.id} className="p-4 hover:bg-slate-50/50 flex items-start space-x-3 text-xs">
-              <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold shrink-0">
+            <div key={evt.id} className="p-5 hover:bg-slate-50/50 flex items-start space-x-4 text-xs transition-colors">
+              <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold shrink-0 mt-0.5">
                 {evt.actorRole.charAt(0)}
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-slate-900">{evt.title}</h4>
-                  <span className="text-[11px] text-slate-400 font-medium">{new Date(evt.timestamp).toLocaleString()}</span>
+                  <span className="text-[11px] text-slate-400">{new Date(evt.timestamp).toLocaleString()}</span>
                 </div>
-                <p className="text-slate-600 mt-0.5 leading-snug">{evt.description}</p>
-                <div className="flex items-center space-x-2 mt-1">
-                  <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-semibold">
-                    Actor: {evt.actorName} ({evt.actorRole})
-                  </span>
-                  <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md font-semibold">
-                    {evt.eventType}
-                  </span>
-                </div>
+                <p className="text-slate-600 mt-1 leading-relaxed">{evt.description}</p>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
 };

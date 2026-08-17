@@ -136,7 +136,7 @@ export const InventoryManagementView: React.FC = () => {
                 <th className="px-6 py-3">Product</th>
                 <th className="px-6 py-3">Movement Type</th>
                 <th className="px-6 py-3">Qty Change</th>
-                <th className="px-6 py-3">Prev -> New Qty</th>
+                <th className="px-6 py-3">Prev &rarr; New Qty</th>
                 <th className="px-6 py-3">Audit Reason</th>
               </tr>
             </thead>
@@ -151,7 +151,7 @@ export const InventoryManagementView: React.FC = () => {
                       {mov.quantityChange >= 0 ? `+${mov.quantityChange}` : mov.quantityChange}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-medium text-slate-700">{mov.previousQty} -> {mov.newQty}</td>
+                  <td className="px-6 py-4 font-medium text-slate-700">{mov.previousQty} &rarr; {mov.newQty}</td>
                   <td className="px-6 py-4 text-slate-600 leading-snug">{mov.reason}</td>
                 </tr>
               ))}
