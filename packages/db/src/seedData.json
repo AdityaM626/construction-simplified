@@ -1,0 +1,336 @@
+{
+  "users": [
+    {
+      "id": "usr-homeowner-1",
+      "email": "rajesh.homeowner@gmail.com",
+      "fullName": "Rajesh Kumar",
+      "phone": "+91 98765 43210",
+      "role": "HOMEOWNER",
+      "isVerified": true,
+      "createdAt": "2026-01-15T10:00:00.000Z"
+    },
+    {
+      "id": "usr-builder-1",
+      "email": "contact@apexinfra.com",
+      "fullName": "Vikram Singh (Apex Infra)",
+      "phone": "+91 98111 22334",
+      "role": "BUILDER",
+      "isVerified": true,
+      "createdAt": "2025-11-10T10:00:00.000Z"
+    },
+    {
+      "id": "usr-dealer-1",
+      "email": "sales@ultratechoutlet.in",
+      "fullName": "Suresh Agarwal (UltraTech Cement Outlet)",
+      "phone": "+91 99888 77665",
+      "role": "DEALER",
+      "isVerified": true,
+      "createdAt": "2025-10-05T10:00:00.000Z"
+    },
+    {
+      "id": "usr-dealer-2",
+      "email": "orders@jindalsteelmart.com",
+      "fullName": "Amit Patel (Jindal TMT Steel Hub)",
+      "phone": "+91 98999 11223",
+      "role": "DEALER",
+      "isVerified": true,
+      "createdAt": "2025-09-20T10:00:00.000Z"
+    },
+    {
+      "id": "usr-admin-1",
+      "email": "admin@construction-os.io",
+      "fullName": "Platform Ops Admin",
+      "phone": "+91 90000 00000",
+      "role": "ADMIN",
+      "isVerified": true,
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    }
+  ],
+  "builderProfiles": [
+    {
+      "id": "bld-prof-1",
+      "userId": "usr-builder-1",
+      "companyName": "Apex Infrastructure & Builders",
+      "experienceYears": 14,
+      "serviceArea": "Whitefield & Electronic City, Bengaluru",
+      "verificationStatus": "VERIFIED",
+      "portfolio": [
+        { "title": "4BHK Luxury Villa at Sarjapur", "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80", "areaSqFt": 3400 }
+      ],
+      "rating": 4.9,
+      "completedProjectsCount": 28,
+      "specialties": ["Residential Villas", "Structural Engineering"]
+    }
+  ],
+  "dealerProfiles": [
+    {
+      "id": "dlr-prof-1",
+      "userId": "usr-dealer-1",
+      "businessName": "UltraTech Authorized Cement Depot",
+      "gstNumber": "29ABCDE1234F1Z5",
+      "serviceRadiusKm": 35,
+      "verificationStatus": "VERIFIED",
+      "address": "Outer Ring Road, Marathahalli, Bengaluru",
+      "rating": 4.9
+    },
+    {
+      "id": "dlr-prof-2",
+      "userId": "usr-dealer-2",
+      "businessName": "Jindal TMT & Steel Stockist Hub",
+      "gstNumber": "29JKLM5678P2Z9",
+      "serviceRadiusKm": 50,
+      "verificationStatus": "VERIFIED",
+      "address": "Peenya Industrial Area Phase 2, Bengaluru",
+      "rating": 4.8
+    }
+  ],
+  "projects": [
+    {
+      "id": "prj-101",
+      "homeownerId": "usr-homeowner-1",
+      "homeownerName": "Rajesh Kumar",
+      "builderId": "usr-builder-1",
+      "builderName": "Apex Infrastructure & Builders",
+      "name": "Sharma Residence / Kumar Villa (4BHK)",
+      "type": "NEW_CONSTRUCTION",
+      "location": "Plot #42, Palm Meadows Enclave, Whitefield, Bengaluru",
+      "plotAreaSqFt": 2750,
+      "totalBudget": 4500000,
+      "spentCost": 1820000,
+      "committedCost": 850000,
+      "targetCompletionDate": "2027-03-31",
+      "status": "IN_PROGRESS",
+      "createdAt": "2026-02-01T09:00:00.000Z"
+    }
+  ],
+  "materialRequirements": [
+    {
+      "id": "req-101",
+      "projectId": "prj-101",
+      "projectName": "Sharma Residence / Kumar Villa (4BHK)",
+      "contractorId": "usr-builder-1",
+      "contractorName": "Vikram Singh (Apex Infra)",
+      "category": "CEMENT",
+      "itemName": "UltraTech PPC Cement (50kg Bags)",
+      "specification": "Grade 53 PPC Cement for slab shuttering & column casting",
+      "requiredQty": 500,
+      "orderedQty": 500,
+      "deliveredQty": 350,
+      "remainingQty": 150,
+      "unit": "Bag",
+      "estimatedUnitPrice": 420,
+      "selectedDealerId": "dlr-prof-1",
+      "selectedDealerName": "UltraTech Authorized Cement Depot",
+      "status": "PARTIALLY_DELIVERED",
+      "createdAt": "2026-02-05T10:00:00.000Z"
+    },
+    {
+      "id": "req-102",
+      "projectId": "prj-101",
+      "projectName": "Sharma Residence / Kumar Villa (4BHK)",
+      "contractorId": "usr-builder-1",
+      "contractorName": "Vikram Singh (Apex Infra)",
+      "category": "STEEL",
+      "itemName": "Jindal Panther TMT Rebars 12mm",
+      "specification": "Fe 550D High ductility earthquake resistant rebars",
+      "requiredQty": 10,
+      "orderedQty": 4,
+      "deliveredQty": 0,
+      "remainingQty": 6,
+      "unit": "Tonne",
+      "estimatedUnitPrice": 62500,
+      "selectedDealerId": "dlr-prof-2",
+      "selectedDealerName": "Jindal TMT & Steel Stockist Hub",
+      "status": "ORDERED",
+      "createdAt": "2026-08-08T09:00:00.000Z"
+    }
+  ],
+  "products": [
+    {
+      "id": "prd-1",
+      "dealerId": "dlr-prof-1",
+      "dealerName": "UltraTech Authorized Cement Depot",
+      "name": "UltraTech PPC Cement (50kg Bag)",
+      "category": "CEMENT",
+      "brand": "UltraTech Cement",
+      "specifications": "Portland Pozzolana Cement Grade 53, ISO Certified",
+      "unit": "Bag (50 kg)",
+      "unitPrice": 420,
+      "stockQty": 1200,
+      "availableQty": 700,
+      "reservedQty": 500,
+      "moq": 50,
+      "deliveryEtaDays": 1,
+      "isVerifiedDealer": true,
+      "rating": 4.9,
+      "stockStatus": "IN_STOCK"
+    },
+    {
+      "id": "prd-3",
+      "dealerId": "dlr-prof-2",
+      "dealerName": "Jindal TMT & Steel Stockist Hub",
+      "name": "Jindal Panther TMT Rebars 12mm (Fe 550D)",
+      "category": "STEEL",
+      "brand": "Jindal Panther",
+      "specifications": "High ductility Fe 550D earthquake resistant rebars",
+      "unit": "Tonne",
+      "unitPrice": 62500,
+      "stockQty": 45,
+      "availableQty": 41,
+      "reservedQty": 4,
+      "moq": 1,
+      "deliveryEtaDays": 2,
+      "isVerifiedDealer": true,
+      "rating": 4.9,
+      "stockStatus": "IN_STOCK"
+    }
+  ],
+  "orderRequests": [
+    {
+      "id": "ORD-1042",
+      "projectId": "prj-101",
+      "projectName": "Sharma Residence / Kumar Villa (4BHK)",
+      "homeownerId": "usr-homeowner-1",
+      "homeownerName": "Rajesh Kumar",
+      "contractorId": "usr-builder-1",
+      "contractorName": "Vikram Singh (Apex Infra)",
+      "dealerId": "dlr-prof-1",
+      "dealerName": "UltraTech Authorized Cement Depot",
+      "materialRequirementId": "req-101",
+      "createdByRole": "BUILDER",
+      "items": [
+        {
+          "id": "itm-1042",
+          "productId": "prd-1",
+          "productName": "UltraTech PPC Cement (50kg Bag)",
+          "unitPrice": 420,
+          "quantity": 500,
+          "deliveredQuantity": 350,
+          "totalPrice": 210000
+        }
+      ],
+      "totalAmount": 210000,
+      "status": "PARTIALLY_DELIVERED",
+      "expectedDeliveryDate": "2026-08-19",
+      "createdAt": "2026-08-17T10:00:00.000Z",
+      "notes": "500 bags ordered. 350 delivered in tranche 1, 150 bags pending in tranche 2."
+    }
+  ],
+  "deliveryJobs": [
+    {
+      "id": "DLV-1042-1",
+      "orderId": "ORD-1042",
+      "projectId": "prj-101",
+      "projectName": "Sharma Residence / Kumar Villa (4BHK)",
+      "dealerId": "dlr-prof-1",
+      "dealerName": "UltraTech Authorized Cement Depot",
+      "transporterId": "trp-prof-1",
+      "transporterName": "Express Heavy Haul Logistics",
+      "driverPhone": "+91 97777 88899",
+      "vehicleNumber": "KA-01-EQ-9876",
+      "pickupAddress": "Outer Ring Road Cement Depot, Marathahalli, Bengaluru",
+      "deliveryAddress": "Plot #42, Palm Meadows Enclave, Whitefield, Bengaluru",
+      "status": "DELIVERED",
+      "dispatchedQty": 350,
+      "deliveredQty": 350,
+      "estimatedEta": "2026-08-18 11:00 AM",
+      "proofOfDelivery": {
+        "recipientName": "Vikram Singh (Site Engineer)",
+        "photoUrl": "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=800&q=80",
+        "timestamp": "2026-08-18T10:45:00.000Z",
+        "notes": "350 cement bags unloaded safely. 150 bags remaining for Tranche 2."
+      },
+      "createdAt": "2026-08-17T14:00:00.000Z"
+    }
+  ],
+  "projectLedger": [
+    {
+      "id": "ledg-1",
+      "projectId": "prj-101",
+      "actorId": "usr-homeowner-1",
+      "actorName": "Rajesh Kumar",
+      "actorRole": "HOMEOWNER",
+      "eventType": "PROJECT_CREATED",
+      "title": "Project Initialized",
+      "description": "Rajesh Kumar created Sharma Residence project (Budget ₹45,00,000)",
+      "timestamp": "2026-02-01T09:00:00.000Z"
+    },
+    {
+      "id": "ledg-2",
+      "projectId": "prj-101",
+      "actorId": "usr-builder-1",
+      "actorName": "Vikram Singh (Apex Infra)",
+      "actorRole": "BUILDER",
+      "eventType": "MATERIAL_REQUESTED",
+      "title": "Material Requirement Created",
+      "description": "Apex Infra added requirement: 500 bags UltraTech PPC Cement",
+      "entityId": "req-101",
+      "timestamp": "2026-08-17T10:00:00.000Z"
+    },
+    {
+      "id": "ledg-3",
+      "projectId": "prj-101",
+      "actorId": "usr-builder-1",
+      "actorName": "Vikram Singh",
+      "actorRole": "BUILDER",
+      "eventType": "SUPPLIER_SELECTED",
+      "title": "Supplier Selected",
+      "description": "Selected UltraTech Cement Depot @ ₹420/bag for Order #ORD-1042",
+      "entityId": "ORD-1042",
+      "timestamp": "2026-08-17T10:15:00.000Z"
+    },
+    {
+      "id": "ledg-4",
+      "projectId": "prj-101",
+      "actorId": "usr-dealer-1",
+      "actorName": "UltraTech Cement Depot",
+      "actorRole": "DEALER",
+      "eventType": "ORDER_ACCEPTED",
+      "title": "Order Accepted & Inventory Reserved",
+      "description": "Shopkeeper accepted Order #ORD-1042. Reserved 500 bags in warehouse.",
+      "entityId": "ORD-1042",
+      "timestamp": "2026-08-17T10:30:00.000Z"
+    },
+    {
+      "id": "ledg-5",
+      "projectId": "prj-101",
+      "actorId": "usr-dealer-1",
+      "actorName": "UltraTech Cement Depot",
+      "actorRole": "DEALER",
+      "eventType": "PARTIAL_DELIVERY",
+      "title": "Tranche 1 Delivery Completed",
+      "description": "350 bags delivered (PoD confirmed by Vikram Singh). 150 bags remaining.",
+      "entityId": "DLV-1042-1",
+      "timestamp": "2026-08-18T10:45:00.000Z"
+    }
+  ],
+  "milestones": [
+    {
+      "id": "mls-1",
+      "projectId": "prj-101",
+      "title": "Site Excavation & Foundation RCC",
+      "description": "Soil levelling & PCC footing concrete pour.",
+      "plannedStartDate": "2026-02-05",
+      "plannedEndDate": "2026-03-15",
+      "actualEndDate": "2026-03-12",
+      "completionPercentage": 100,
+      "status": "COMPLETED",
+      "allocatedBudget": 900000
+    },
+    {
+      "id": "mls-2",
+      "projectId": "prj-101",
+      "title": "Ground & First Floor Superstructure",
+      "description": "RCC columns, brick masonry & roof slab casting.",
+      "plannedStartDate": "2026-03-16",
+      "plannedEndDate": "2026-06-30",
+      "actualEndDate": null,
+      "completionPercentage": 72,
+      "status": "IN_PROGRESS",
+      "allocatedBudget": 1500000
+    }
+  ],
+  "documents": [],
+  "notifications": [],
+  "auditEvents": []
+}
