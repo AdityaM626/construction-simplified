@@ -49,9 +49,9 @@ export const InventoryManagementView: React.FC = () => {
     e.preventDefault();
     const qtyChange = Number(adjustQty);
     const prod = products[0];
-    const prev = prod.availableQty;
-    prod.availableQty += qtyChange;
-    prod.stockQty = prod.availableQty + prod.reservedQty;
+    const prev = prod.availableQty || 0;
+    prod.availableQty = prev + qtyChange;
+    prod.stockQty = (prod.availableQty || 0) + (prod.reservedQty || 0);
 
     const newMov: InventoryMovement = {
       id: `inv-mov-${Date.now()}`,
@@ -61,7 +61,7 @@ export const InventoryManagementView: React.FC = () => {
       type: 'STOCK_ADDITION',
       quantityChange: qtyChange,
       previousQty: prev,
-      newQty: prod.availableQty,
+      newQty: prod.availableQty || 0,
       reason: adjustReason,
       timestamp: new Date().toISOString()
     };
@@ -147,8 +147,8 @@ export const InventoryManagementView: React.FC = () => {
                   <td className="px-6 py-4 font-bold text-slate-900">{mov.productName}</td>
                   <td className="px-6 py-4 font-bold text-blue-700">{mov.type}</td>
                   <td className="px-6 py-4 font-bold font-tabular">
-                    <span className={mov.quantityChange >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
-                      {mov.quantityChange >= 0 ? `+${mov.quantityChange}` : mov.quantityChange}
+                    <span className={(mov.quantityChange || 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
+                      {(mov.quantityChange || 0) >= 0 ? `+${mov.quantityChange || 0}` : (mov.quantityChange || 0)}
                     </span>
                   </td>
                   <td className="px-6 py-4 font-medium text-slate-700">{mov.previousQty} &rarr; {mov.newQty}</td>

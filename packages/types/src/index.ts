@@ -1,5 +1,14 @@
 export type UserRole = 'HOMEOWNER' | 'BUILDER' | 'DEALER' | 'ADMIN';
 
+export type ConstructionTeamRole = 
+  | 'CONTRACTOR'
+  | 'ELECTRICIAN'
+  | 'PLUMBER'
+  | 'PAINTER'
+  | 'ARCHITECT'
+  | 'MASON'
+  | 'GENERAL_LABOUR';
+
 export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
 
 export type ProjectStatus = 'PLANNING' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD';
@@ -45,6 +54,28 @@ export interface User {
   role: UserRole;
   isVerified: boolean;
   createdAt: string;
+}
+
+export interface ConstructionTeamMember {
+  id: string;
+  projectId: string;
+  contractorId: string;
+  name: string;
+  role: ConstructionTeamRole;
+  phone: string;
+  specialization: string;
+  assignedMilestoneId?: string;
+  assignedMilestoneTitle?: string;
+  status: 'ACTIVE' | 'UPCOMING' | 'COMPLETED';
+}
+
+export interface ProjectMember {
+  id: string;
+  projectId: string;
+  userId: string;
+  userName: string;
+  userRole: UserRole | ConstructionTeamRole;
+  joinedAt: string;
 }
 
 export interface BuilderProfile {
@@ -110,6 +141,27 @@ export interface MaterialRequirement {
   createdAt: string;
 }
 
+export interface MaterialTraceabilityItem {
+  requirementId: string;
+  category: ProductCategory;
+  itemName: string;
+  specification: string;
+  requiredQty: number;
+  orderedQty: number;
+  deliveredQty: number;
+  remainingQty: number;
+  unit: string;
+  contractorName: string;
+  supplierName: string;
+  orderId?: string;
+  orderStatus?: OrderStatus;
+  orderedDate?: string;
+  deliveredDate?: string;
+  invoiceNumber?: string;
+  paymentStatus?: string;
+  totalValue: number;
+}
+
 export interface Product {
   id: string;
   dealerId: string;
@@ -121,13 +173,13 @@ export interface Product {
   unit: string;
   unitPrice: number;
   stockQty: number;
-  availableQty: number;
-  reservedQty: number;
+  availableQty?: number;
+  reservedQty?: number;
   moq: number;
   deliveryEtaDays: number;
   isVerifiedDealer: boolean;
   rating: number;
-  stockStatus: StockStatus;
+  stockStatus?: StockStatus;
 }
 
 export interface OrderItem {
@@ -167,6 +219,9 @@ export interface DeliveryJob {
   projectName: string;
   dealerId: string;
   dealerName: string;
+  transporterId?: string;
+  transporterName?: string;
+  driverPhone?: string;
   vehicleNumber?: string;
   pickupAddress: string;
   deliveryAddress: string;
@@ -188,10 +243,11 @@ export interface ProjectLedgerEvent {
   projectId: string;
   actorId: string;
   actorName: string;
-  actorRole: UserRole;
+  actorRole: UserRole | ConstructionTeamRole;
   eventType: 
     | 'PROJECT_CREATED'
     | 'CONTRACTOR_ASSIGNED'
+    | 'TEAM_MEMBER_ADDED'
     | 'BOQ_CREATED'
     | 'MATERIAL_REQUESTED'
     | 'SUPPLIER_SELECTED'
@@ -278,7 +334,7 @@ export interface AuditEvent {
   id: string;
   actorId: string;
   actorName: string;
-  actorRole: UserRole;
+  actorRole: UserRole | ConstructionTeamRole;
   action: string;
   entity: string;
   entityId: string;

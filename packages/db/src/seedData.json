@@ -46,6 +46,44 @@
       "createdAt": "2025-01-01T00:00:00.000Z"
     }
   ],
+  "constructionTeamMembers": [
+    {
+      "id": "tm-101",
+      "projectId": "prj-101",
+      "contractorId": "usr-builder-1",
+      "name": "Ramesh Kumar",
+      "role": "ELECTRICIAN",
+      "phone": "+91 98450 11223",
+      "specialization": "3-Phase Conduit Wiring & Distribution Boards",
+      "assignedMilestoneId": "mls-2",
+      "assignedMilestoneTitle": "Ground & First Floor Superstructure",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "tm-102",
+      "projectId": "prj-101",
+      "contractorId": "usr-builder-1",
+      "name": "Suresh Babu",
+      "role": "PLUMBER",
+      "phone": "+91 97411 55667",
+      "specialization": "CPVC Water Supply & Sewerage Line Layout",
+      "assignedMilestoneId": "mls-2",
+      "assignedMilestoneTitle": "Ground & First Floor Superstructure",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "tm-103",
+      "projectId": "prj-101",
+      "contractorId": "usr-builder-1",
+      "name": "Ananya Roy",
+      "role": "ARCHITECT",
+      "phone": "+91 99000 33445",
+      "specialization": "Structural & Elevation Blueprint Verification",
+      "assignedMilestoneId": "mls-1",
+      "assignedMilestoneTitle": "Site Excavation & Foundation RCC",
+      "status": "COMPLETED"
+    }
+  ],
   "builderProfiles": [
     {
       "id": "bld-prof-1",
@@ -216,80 +254,18 @@
       "notes": "500 bags ordered. 350 delivered in tranche 1, 150 bags pending in tranche 2."
     }
   ],
-  "deliveryJobs": [
-    {
-      "id": "DLV-1042-1",
-      "orderId": "ORD-1042",
-      "projectId": "prj-101",
-      "projectName": "Sharma Residence / Kumar Villa (4BHK)",
-      "dealerId": "dlr-prof-1",
-      "dealerName": "UltraTech Authorized Cement Depot",
-      "transporterId": "trp-prof-1",
-      "transporterName": "Express Heavy Haul Logistics",
-      "driverPhone": "+91 97777 88899",
-      "vehicleNumber": "KA-01-EQ-9876",
-      "pickupAddress": "Outer Ring Road Cement Depot, Marathahalli, Bengaluru",
-      "deliveryAddress": "Plot #42, Palm Meadows Enclave, Whitefield, Bengaluru",
-      "status": "DELIVERED",
-      "dispatchedQty": 350,
-      "deliveredQty": 350,
-      "estimatedEta": "2026-08-18 11:00 AM",
-      "proofOfDelivery": {
-        "recipientName": "Vikram Singh (Site Engineer)",
-        "photoUrl": "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=800&q=80",
-        "timestamp": "2026-08-18T10:45:00.000Z",
-        "notes": "350 cement bags unloaded safely. 150 bags remaining for Tranche 2."
-      },
-      "createdAt": "2026-08-17T14:00:00.000Z"
-    }
-  ],
+  "deliveryJobs": [],
   "projectLedger": [
     {
-      "id": "ledg-1",
-      "projectId": "prj-101",
-      "actorId": "usr-homeowner-1",
-      "actorName": "Rajesh Kumar",
-      "actorRole": "HOMEOWNER",
-      "eventType": "PROJECT_CREATED",
-      "title": "Project Initialized",
-      "description": "Rajesh Kumar created Sharma Residence project (Budget ₹45,00,000)",
-      "timestamp": "2026-02-01T09:00:00.000Z"
-    },
-    {
-      "id": "ledg-2",
-      "projectId": "prj-101",
-      "actorId": "usr-builder-1",
-      "actorName": "Vikram Singh (Apex Infra)",
-      "actorRole": "BUILDER",
-      "eventType": "MATERIAL_REQUESTED",
-      "title": "Material Requirement Created",
-      "description": "Apex Infra added requirement: 500 bags UltraTech PPC Cement",
-      "entityId": "req-101",
-      "timestamp": "2026-08-17T10:00:00.000Z"
-    },
-    {
-      "id": "ledg-3",
+      "id": "ledg-6",
       "projectId": "prj-101",
       "actorId": "usr-builder-1",
       "actorName": "Vikram Singh",
       "actorRole": "BUILDER",
-      "eventType": "SUPPLIER_SELECTED",
-      "title": "Supplier Selected",
-      "description": "Selected UltraTech Cement Depot @ ₹420/bag for Order #ORD-1042",
-      "entityId": "ORD-1042",
-      "timestamp": "2026-08-17T10:15:00.000Z"
-    },
-    {
-      "id": "ledg-4",
-      "projectId": "prj-101",
-      "actorId": "usr-dealer-1",
-      "actorName": "UltraTech Cement Depot",
-      "actorRole": "DEALER",
-      "eventType": "ORDER_ACCEPTED",
-      "title": "Order Accepted & Inventory Reserved",
-      "description": "Shopkeeper accepted Order #ORD-1042. Reserved 500 bags in warehouse.",
-      "entityId": "ORD-1042",
-      "timestamp": "2026-08-17T10:30:00.000Z"
+      "eventType": "TEAM_MEMBER_ADDED",
+      "title": "Electrical Specialist Assigned",
+      "description": "Apex Infra assigned Ramesh Kumar (Electrician) for 3-Phase Conduit Wiring",
+      "timestamp": "2026-08-18T09:00:00.000Z"
     },
     {
       "id": "ledg-5",
@@ -300,8 +276,51 @@
       "eventType": "PARTIAL_DELIVERY",
       "title": "Tranche 1 Delivery Completed",
       "description": "350 bags delivered (PoD confirmed by Vikram Singh). 150 bags remaining.",
-      "entityId": "DLV-1042-1",
       "timestamp": "2026-08-18T10:45:00.000Z"
+    },
+    {
+      "id": "ledg-4",
+      "projectId": "prj-101",
+      "actorId": "usr-dealer-1",
+      "actorName": "UltraTech Cement Depot",
+      "actorRole": "DEALER",
+      "eventType": "ORDER_ACCEPTED",
+      "title": "Order Accepted & Inventory Reserved",
+      "description": "Shopkeeper accepted Order #ORD-1042. Reserved 500 bags in warehouse.",
+      "timestamp": "2026-08-17T10:30:00.000Z"
+    },
+    {
+      "id": "ledg-3",
+      "projectId": "prj-101",
+      "actorId": "usr-builder-1",
+      "actorName": "Vikram Singh",
+      "actorRole": "BUILDER",
+      "eventType": "SUPPLIER_SELECTED",
+      "title": "Supplier Selected",
+      "description": "Selected UltraTech Cement Depot @ ₹420/bag for Order #ORD-1042",
+      "timestamp": "2026-08-17T10:15:00.000Z"
+    },
+    {
+      "id": "ledg-2",
+      "projectId": "prj-101",
+      "actorId": "usr-builder-1",
+      "actorName": "Vikram Singh (Apex Infra)",
+      "actorRole": "BUILDER",
+      "eventType": "MATERIAL_REQUESTED",
+      "title": "Material Requirement Created",
+      "description": "Apex Infra added requirement: 500 bags UltraTech PPC Cement",
+      "timestamp": "2026-08-17T10:00:00.000Z"
+    },
+    {
+      "id": "ledg-1",
+      "projectId": "prj-101",
+      "actorId": "usr-homeowner-1",
+      "actorName": "Rajesh Kumar",
+      "actorRole": "HOMEOWNER",
+      "eventType": "PROJECT_CREATED",
+      "title": "Project Initialized",
+      "description": "Rajesh Kumar created Sharma Residence project (Budget ₹45,00,000)",
+      "timestamp": "2026-02-01T09:00:00.000Z"
     }
   ],
   "milestones": [

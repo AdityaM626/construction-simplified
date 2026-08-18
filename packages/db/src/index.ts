@@ -1,6 +1,7 @@
 import seedData from './seedData.json';
 import {
   User,
+  ConstructionTeamMember,
   BuilderProfile,
   DealerProfile,
   Project,
@@ -16,6 +17,7 @@ import {
 
 class ConstructionDatabase {
   public users: User[];
+  public constructionTeamMembers: ConstructionTeamMember[];
   public builderProfiles: BuilderProfile[];
   public dealerProfiles: DealerProfile[];
   public projects: Project[];
@@ -29,6 +31,7 @@ class ConstructionDatabase {
 
   constructor() {
     this.users = JSON.parse(JSON.stringify(seedData.users)) as User[];
+    this.constructionTeamMembers = (seedData as any).constructionTeamMembers ? JSON.parse(JSON.stringify((seedData as any).constructionTeamMembers)) : [];
     this.builderProfiles = JSON.parse(JSON.stringify(seedData.builderProfiles)) as BuilderProfile[];
     this.dealerProfiles = JSON.parse(JSON.stringify(seedData.dealerProfiles)) as DealerProfile[];
     this.projects = JSON.parse(JSON.stringify(seedData.projects)) as Project[];
@@ -41,7 +44,7 @@ class ConstructionDatabase {
     this.siteUpdates = (seedData as any).siteUpdates ? JSON.parse(JSON.stringify((seedData as any).siteUpdates)) : [];
   }
 
-  public logLedger(projectId: string, actorId: string, actorName: string, actorRole: UserRole, eventType: any, title: string, description: string, entityId?: string, metadata?: any) {
+  public logLedger(projectId: string, actorId: string, actorName: string, actorRole: any, eventType: any, title: string, description: string, entityId?: string, metadata?: any) {
     const event: ProjectLedgerEvent = {
       id: `ledg-${Date.now()}-${Math.floor(Math.random()*1000)}`,
       projectId,

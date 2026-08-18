@@ -15,26 +15,31 @@ import { ChangeOrdersView } from './components/homeowner/ChangeOrdersView';
 import { PaymentsView } from './components/homeowner/PaymentsView';
 import { DocumentVaultView } from './components/homeowner/DocumentVaultView';
 import { VerifiedReviewsView } from './components/homeowner/VerifiedReviewsView';
+import { OwnerMaterialTraceabilityView } from './components/homeowner/OwnerMaterialTraceabilityView';
 
 import { BuilderDashboard } from './components/builder/BuilderDashboard';
 import { BuilderTasksMarginView } from './components/builder/BuilderTasksMarginView';
+import { ConstructionTeamRosterView } from './components/builder/ConstructionTeamRosterView';
 
 import { DealerDashboard } from './components/dealer/DealerDashboard';
 import { InventoryManagementView } from './components/dealer/InventoryManagementView';
-
-import { DeliveryLogisticsView } from './components/transport/DeliveryLogisticsView';
 
 import { AdminConsole } from './components/admin/AdminConsole';
 import { AnalyticsDashboardView } from './components/common/AnalyticsDashboardView';
 import { ConnectedProjectView } from './components/common/ConnectedProjectView';
 
+import { PublicLandingPage } from './components/public/PublicLandingPage';
+import { WorkshopsView } from './components/public/WorkshopsView';
+
 const MainContent: React.FC = () => {
   const { currentUser, activeTab, isMobileViewport } = useAuth();
 
   const renderActiveView = () => {
-    if (activeTab === 'connected-project') {
-      return <ConnectedProjectView />;
-    }
+    if (activeTab === 'public') return <PublicLandingPage />;
+    if (activeTab === 'workshops') return <WorkshopsView />;
+    if (activeTab === 'connected-project') return <ConnectedProjectView />;
+    if (activeTab === 'traceability') return <OwnerMaterialTraceabilityView />;
+    if (activeTab === 'team-roster') return <ConstructionTeamRosterView />;
 
     if (currentUser.role === 'HOMEOWNER') {
       switch (activeTab) {
@@ -66,8 +71,6 @@ const MainContent: React.FC = () => {
         case 'orders': return <DealerDashboard />;
         default: return <InventoryManagementView />;
       }
-    } else if (currentUser.role === 'TRANSPORT_PARTNER') {
-      return <DeliveryLogisticsView />;
     } else if (currentUser.role === 'ADMIN') {
       switch (activeTab) {
         case 'verifications': return <AdminConsole />;

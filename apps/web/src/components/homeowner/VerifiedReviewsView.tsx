@@ -58,7 +58,7 @@ export const VerifiedReviewsView: React.FC = () => {
             <p className="text-xs text-slate-700 leading-relaxed italic">"{r.comment}"</p>
 
             <span className="text-[11px] text-slate-400 block pt-2 border-t border-slate-100">
-              Reviewed on {new Date(r.createdAt).toLocaleDateString()}
+              Reviewed on {new Date(r.timestamp || r.createdAt || Date.now()).toLocaleDateString()}
             </span>
           </div>
         ))}

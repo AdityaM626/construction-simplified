@@ -65,7 +65,7 @@ export const PaymentsView: React.FC = () => {
                     <p className="font-bold text-slate-800">{p.payerName}</p>
                     <span className="text-[11px] text-slate-500">Paid to: {p.payeeName}</span>
                   </td>
-                  <td className="px-6 py-4 font-semibold text-slate-700">{p.paymentMethod.replace('_', ' ')}</td>
+                  <td className="px-6 py-4 font-semibold text-slate-700">{(p.paymentMethod || 'Online').replace('_', ' ')}</td>
                   <td className="px-6 py-4 font-bold text-emerald-700 font-tabular text-sm">
                     ₹{p.amount.toLocaleString('en-IN')}
                   </td>
