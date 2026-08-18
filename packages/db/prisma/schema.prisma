@@ -1,6 +1,6 @@
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -10,7 +10,7 @@ generator client {
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
-  passwordHash String
+  passwordHash String?
   fullName     String
   phone        String
   role         String
@@ -24,90 +24,107 @@ model User {
   auditEvents    AuditEvent[]
 }
 
+model ConstructionTeamMember {
+  id                     String   @id @default(uuid())
+  projectId              String
+  contractorId           String
+  name                   String
+  role                   String   // ELECTRICIAN, PLUMBER, PAINTER, ARCHITECT, MASON, GENERAL_LABOUR
+  phone                  String
+  specialization         String
+  assignedMilestoneId    String?
+  assignedMilestoneTitle String?
+  status                 String   @default("ACTIVE") // ACTIVE, UPCOMING, COMPLETED
+  createdAt              DateTime @default(now())
+
+  project                Project  @relation(fields: [projectId], references: [id])
+}
+
 model BuilderProfile {
-  id                    String   @id @default(uuid())
-  userId                String   @unique
-  companyName           String
-  experienceYears       Int
-  serviceArea           String
-  verificationStatus    String   @default("PENDING")
-  portfolioJson         String
-  rating                Float    @default(4.8)
-  completedProjectsCount Int     @default(12)
-  specialtiesJson       String
-  user                  User     @relation(fields: [userId], references: [id])
+  id                     String   @id @default(uuid())
+  userId                 String   @unique
+  companyName            String
+  experienceYears        Int
+  serviceArea            String
+  verificationStatus     String   @default("VERIFIED")
+  portfolioJson          String?
+  rating                 Float    @default(4.9)
+  completedProjectsCount Int      @default(28)
+  specialtiesJson        String?
+  user                   User     @relation(fields: [userId], references: [id])
 }
 
 model DealerProfile {
-  id                 String    @id @default(uuid())
-  userId             String    @unique
+  id                 String         @id @default(uuid())
+  userId             String         @unique
   businessName       String
   gstNumber          String
-  serviceRadiusKm    Int
-  verificationStatus String    @default("PENDING")
+  serviceRadiusKm    Int            @default(35)
+  verificationStatus String         @default("VERIFIED")
   address            String
-  rating             Float     @default(4.7)
-  user               User      @relation(fields: [userId], references: [id])
+  rating             Float          @default(4.9)
+  user               User           @relation(fields: [userId], references: [id])
   products           Product[]
   orders             OrderRequest[]
 }
 
 model Project {
-  id                   String    @id @default(uuid())
+  id                   String   @id @default(uuid())
   homeownerId          String
+  homeownerName        String?
   builderId            String?
+  builderName          String?
   name                 String
-  type                 String
+  type                 String   @default("NEW_CONSTRUCTION")
   location             String
   plotAreaSqFt         Float
   totalBudget          Float
-  spentCost            Float     @default(0.0)
-  committedCost        Float     @default(0.0)
+  spentCost            Float    @default(0.0)
+  committedCost        Float    @default(0.0)
   targetCompletionDate String
-  status               String    @default("PLANNING")
-  createdAt            DateTime  @default(now())
+  status               String   @default("IN_PROGRESS")
+  createdAt            DateTime @default(now())
 
-  homeowner            User      @relation("HomeownerProjects", fields: [homeownerId], references: [id])
-  builder              User?     @relation("BuilderProjects", fields: [builderId], references: [id])
+  homeowner            User     @relation("HomeownerProjects", fields: [homeownerId], references: [id])
+  builder              User?    @relation("BuilderProjects", fields: [builderId], references: [id])
+
   milestones           Milestone[]
   siteUpdates          SiteUpdate[]
+  materialRequirements MaterialRequirement[]
   orderRequests        OrderRequest[]
+  deliveryJobs         DeliveryJob[]
   documents            DocumentRecord[]
+  ledgerEvents         ProjectLedgerEvent[]
+  teamMembers          ConstructionTeamMember[]
 }
 
-model Milestone {
-  id                   String   @id @default(uuid())
-  projectId            String
-  title                String
-  description          String
-  plannedStartDate     String
-  plannedEndDate       String
-  actualEndDate        String?
-  completionPercentage Int      @default(0)
-  status               String   @default("PLANNED")
-  allocatedBudget      Float
-  project              Project  @relation(fields: [projectId], references: [id])
-  siteUpdates          SiteUpdate[]
-}
+model MaterialRequirement {
+  id                 String   @id @default(uuid())
+  projectId          String
+  projectName        String
+  contractorId       String
+  contractorName     String
+  category           String
+  itemName           String
+  specification      String
+  requiredQty        Int
+  orderedQty         Int      @default(0)
+  deliveredQty       Int      @default(0)
+  remainingQty       Int
+  unit               String
+  estimatedUnitPrice Float
+  selectedDealerId   String?
+  selectedDealerName String?
+  status             String   @default("PENDING")
+  createdAt          DateTime @default(now())
 
-model SiteUpdate {
-  id                   String   @id @default(uuid())
-  milestoneId          String
-  projectId            String
-  builderId            String
-  builderName          String
-  notes                String
-  completionPercentage Int
-  photoUrl             String
-  timestamp            DateTime @default(now())
-
-  milestone            Milestone @relation(fields: [milestoneId], references: [id])
-  project              Project   @relation(fields: [projectId], references: [id])
+  project            Project  @relation(fields: [projectId], references: [id])
 }
 
 model Product {
-  id               String   @id @default(uuid())
+  id               String        @id @default(uuid())
   dealerId         String
+  dealerName       String
   name             String
   category         String
   brand            String
@@ -115,26 +132,105 @@ model Product {
   unit             String
   unitPrice        Float
   stockQty         Int
-  moq              Int
-  deliveryEtaDays  Int
-  isVerifiedDealer Boolean  @default(true)
-  rating           Float    @default(4.9)
+  availableQty     Int           @default(0)
+  reservedQty      Int           @default(0)
+  moq              Int           @default(1)
+  deliveryEtaDays  Int           @default(1)
+  isVerifiedDealer Boolean       @default(true)
+  rating           Float         @default(4.9)
+  stockStatus      String        @default("IN_STOCK")
 
   dealer           DealerProfile @relation(fields: [dealerId], references: [id])
 }
 
 model OrderRequest {
-  id            String   @id @default(uuid())
-  projectId     String
-  homeownerId   String
-  dealerId      String
-  totalAmount   Float
-  status        String   @default("REQUESTED")
-  createdAt     DateTime @default(now())
-  notes         String?
+  id                    String        @id @default(uuid())
+  projectId             String
+  projectName           String
+  homeownerId           String
+  homeownerName         String
+  contractorId          String?
+  contractorName        String?
+  dealerId              String
+  dealerName            String
+  materialRequirementId String?
+  createdByRole         String
+  itemsJson             String
+  totalAmount           Float
+  status                String        @default("REQUESTED")
+  expectedDeliveryDate  String?
+  notes                 String?
+  createdAt             DateTime      @default(now())
 
-  project       Project       @relation(fields: [projectId], references: [id])
-  dealer        DealerProfile @relation(fields: [dealerId], references: [id])
+  project               Project       @relation(fields: [projectId], references: [id])
+  dealer                DealerProfile @relation(fields: [dealerId], references: [id])
+  deliveryJobs          DeliveryJob[]
+}
+
+model DeliveryJob {
+  id              String       @id @default(uuid())
+  orderId         String
+  projectId       String
+  projectName     String
+  dealerId        String
+  dealerName      String
+  vehicleNumber   String?
+  pickupAddress   String
+  deliveryAddress String
+  status          String       @default("IN_TRANSIT")
+  estimatedEta    String
+  dispatchedQty   Int?
+  deliveredQty    Int?
+  createdAt       DateTime     @default(now())
+
+  order           OrderRequest @relation(fields: [orderId], references: [id])
+  project         Project      @relation(fields: [projectId], references: [id])
+}
+
+model ProjectLedgerEvent {
+  id          String   @id @default(uuid())
+  projectId   String
+  actorId     String
+  actorName   String
+  actorRole   String
+  eventType   String
+  title       String
+  description String
+  entityId    String?
+  metadata    String?
+  timestamp   DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id])
+}
+
+model Milestone {
+  id                   String       @id @default(uuid())
+  projectId            String
+  title                String
+  description          String
+  plannedStartDate     String
+  plannedEndDate       String
+  actualEndDate        String?
+  completionPercentage Int          @default(0)
+  status               String       @default("PLANNED")
+  allocatedBudget      Float
+  project              Project      @relation(fields: [projectId], references: [id])
+  siteUpdates          SiteUpdate[]
+}
+
+model SiteUpdate {
+  id                   String    @id @default(uuid())
+  milestoneId          String
+  projectId            String
+  builderId            String
+  builderName          String
+  notes                String
+  completionPercentage Int
+  photoUrl             String
+  timestamp            DateTime  @default(now())
+
+  milestone            Milestone @relation(fields: [milestoneId], references: [id])
+  project              Project   @relation(fields: [projectId], references: [id])
 }
 
 model DocumentRecord {
