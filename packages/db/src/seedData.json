@@ -72,6 +72,87 @@
       "createdAt": "2026-02-01T09:00:00.000Z"
     }
   ],
+  "qualityCheckpoints": [
+    {
+      "id": "qcp-101",
+      "projectId": "prj-101",
+      "title": "Foundation RCC Slab Shuttering & Rebar Spacing Inspection",
+      "category": "REBAR_SPACING",
+      "status": "PASS",
+      "inspectorName": "Ananya Roy (Lead Structural Engineer)",
+      "inspectionDate": "2026-03-10",
+      "notes": "Rebar spacing verified at 150mm c/c with cover blocks inserted.",
+      "photoUrls": ["https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=800&q=80"]
+    },
+    {
+      "id": "qcp-102",
+      "projectId": "prj-101",
+      "title": "Underground Sump Waterproofing Application Test",
+      "category": "WATERPROOFING",
+      "status": "PASS",
+      "inspectorName": "Suresh Babu (Senior Quality Auditor)",
+      "inspectionDate": "2026-04-15",
+      "notes": "2-coat Dr. Fixit chemical application verified. 48-hr ponding leak test passed.",
+      "photoUrls": ["https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80"]
+    }
+  ],
+  "defectRecords": [
+    {
+      "id": "def-101",
+      "projectId": "prj-101",
+      "title": "Hairline shrinkage crack near East Boundary footing PCC",
+      "description": "Minor thermal shrinkage crack observed after initial foundation curing.",
+      "defectType": "CRACK",
+      "location": "Grid A-4 East Boundary Footing",
+      "severity": "LOW",
+      "responsibleTrade": "Masonry & Concreting",
+      "reworkTimeDays": 1,
+      "reworkCost": 8500,
+      "status": "VERIFIED_CLOSED",
+      "discoveredDate": "2026-03-14",
+      "resolvedDate": "2026-03-15",
+      "photoUrl": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80"
+    }
+  ],
+  "digitalHandover": {
+    "id": "hnd-101",
+    "projectId": "prj-101",
+    "handoverDate": "2027-03-31",
+    "finalContractValue": 4620000,
+    "finalAmountPaid": 1820000,
+    "outstandingBalance": 2800000,
+    "openDefectsCount": 0,
+    "isFinalInspectionPassed": true,
+    "homeownerConfirmed": false,
+    "contractorConfirmed": true,
+    "contractorConfirmedAt": "2026-08-27T18:00:00.000Z",
+    "documentsBundle": [
+      { "name": "Architectural Structural Blueprints (As-Built)", "category": "DRAWING", "url": "https://construction-os.io/docs/as-built-blueprints.pdf" },
+      { "name": "10-Year Waterproofing Warranty Certification", "category": "WARRANTY", "url": "https://construction-os.io/docs/waterproofing-warranty.pdf" }
+    ]
+  },
+  "homePassport": {
+    "id": "pas-101",
+    "projectId": "prj-101",
+    "propertyName": "Sharma Residence / Kumar Villa (4BHK)",
+    "address": "Plot #42, Palm Meadows Enclave, Whitefield, Bengaluru",
+    "builtUpAreaSqFt": 2750,
+    "floorsCount": 2,
+    "constructionStartDate": "2026-02-01",
+    "handoverDate": "2027-03-31",
+    "contractorName": "Apex Infrastructure & Builders (Vikram Singh)",
+    "contractorPhone": "+91 98111 22334",
+    "systems": {
+      "electrical": { "dbBoardLocation": "Ground Floor Utility Room", "wiringBrand": "Havells FRLS 3-Phase", "mainBreakerCapacity": "63A TPN" },
+      "plumbing": { "pipeBrand": "Ashirvad CPVC & Supreme SWR", "pumpSpecs": "1.5 HP Submersible Automatic Sump Pump", "tankCapacityLiters": 5000 },
+      "waterproofing": { "chemicalBrand": "Dr. Fixit Fastflex 2-Coat", "warrantyYears": 10 },
+      "paint": { "interiorBrand": "Asian Paints Royale Luxury Emulsion", "exteriorBrand": "Asian Paints Apex Ultima Protek" },
+      "flooring": { "materialType": "Italian Bottochino Marble & Somany Vitrified Tiles", "brand": "Bottochino Italy / Somany" }
+    },
+    "maintenanceHistory": [
+      { "date": "2026-03-15", "title": "Foundation PCC Crack Sealing", "category": "REPAIR", "cost": 8500, "performedBy": "Apex Infra Maintenance Crew" }
+    ]
+  },
   "constructionTeamMembers": [
     {
       "id": "tm-101",
@@ -84,30 +165,6 @@
       "assignedMilestoneId": "mls-2",
       "assignedMilestoneTitle": "Ground & First Floor Superstructure",
       "status": "ACTIVE"
-    },
-    {
-      "id": "tm-102",
-      "projectId": "prj-101",
-      "contractorId": "usr-builder-1",
-      "name": "Suresh Babu",
-      "role": "PLUMBER",
-      "phone": "+91 97411 55667",
-      "specialization": "CPVC Water Supply & Sewerage Line Layout",
-      "assignedMilestoneId": "mls-2",
-      "assignedMilestoneTitle": "Ground & First Floor Superstructure",
-      "status": "ACTIVE"
-    },
-    {
-      "id": "tm-103",
-      "projectId": "prj-101",
-      "contractorId": "usr-builder-1",
-      "name": "Ananya Roy",
-      "role": "ARCHITECT",
-      "phone": "+91 99000 33445",
-      "specialization": "Structural & Elevation Blueprint Verification",
-      "assignedMilestoneId": "mls-1",
-      "assignedMilestoneTitle": "Site Excavation & Foundation RCC",
-      "status": "COMPLETED"
     }
   ],
   "boqs": [
@@ -132,29 +189,13 @@
           "estimatedTotal": 504000,
           "actualSpent": 210000,
           "variance": -294000
-        },
-        {
-          "id": "boq-item-2",
-          "boqId": "boq-101",
-          "category": "STEEL",
-          "itemName": "Jindal Panther TMT Rebars 12mm",
-          "description": "Fe 550D High ductility earthquake resistant rebars",
-          "quantity": 15,
-          "unit": "Tonne",
-          "estimatedRate": 62500,
-          "estimatedTotal": 937500,
-          "actualSpent": 250000,
-          "variance": -687500
         }
       ]
     }
   ],
   "budgetVsActualRecords": [
     { "category": "MATERIALS", "estimatedAmount": 2200000, "actualSpent": 1050000, "varianceAmount": -1150000, "variancePercentage": -52.2, "notes": "Procurement on track for superstructure phase" },
-    { "category": "LABOUR", "estimatedAmount": 1400000, "actualSpent": 570000, "varianceAmount": -830000, "variancePercentage": -59.2, "notes": "Masonry and shuttering team weekly disbursements" },
-    { "category": "EQUIPMENT", "estimatedAmount": 400000, "actualSpent": 120000, "varianceAmount": -280000, "variancePercentage": -70.0, "notes": "JCB excavation and concrete mixer rentals" },
-    { "category": "LOGISTICS", "estimatedAmount": 250000, "actualSpent": 80000, "varianceAmount": -170000, "variancePercentage": -68.0, "notes": "Material transport & unloading charges" },
-    { "category": "DESIGN", "estimatedAmount": 250000, "actualSpent": 0, "varianceAmount": -250000, "variancePercentage": -100.0, "notes": "Architect elevation design & structural signoff" }
+    { "category": "LABOUR", "estimatedAmount": 1400000, "actualSpent": 570000, "varianceAmount": -830000, "variancePercentage": -59.2, "notes": "Masonry and shuttering team weekly disbursements" }
   ],
   "dailySiteReports": [
     {
@@ -249,56 +290,24 @@
       "completionPercentage": 72,
       "status": "IN_PROGRESS",
       "allocatedBudget": 1500000,
-      "requiresOwnerApproval": true
-    }
-  ],
-  "contextualMessages": [
-    {
-      "id": "msg-101",
-      "projectId": "prj-101",
-      "entityType": "CHANGE_REQUEST",
-      "entityId": "cho-101",
-      "senderId": "usr-builder-1",
-      "senderName": "Vikram Singh",
-      "senderRole": "BUILDER",
-      "content": "Hi Rajesh, the Italian marble rate includes polishing and seal coating. Let me know if you approve.",
-      "timestamp": "2026-08-25T15:30:00.000Z"
-    }
-  ],
-  "projectLedger": [
-    {
-      "id": "ledg-6",
-      "projectId": "prj-101",
-      "actorId": "usr-builder-1",
-      "actorName": "Vikram Singh",
-      "actorRole": "BUILDER",
-      "eventType": "DAILY_REPORT_SUBMITTED",
-      "title": "Daily Site Report Logged",
-      "description": "Column shuttering alignment verified. 16 workers present.",
-      "timestamp": "2026-08-27T17:30:00.000Z"
+      "requiresOwnerApproval": true,
+      "dependsOnMilestoneId": "mls-1"
     },
     {
-      "id": "ledg-5",
+      "id": "mls-3",
       "projectId": "prj-101",
-      "actorId": "usr-homeowner-1",
-      "actorName": "Rajesh Kumar",
-      "actorRole": "HOMEOWNER",
-      "eventType": "CHANGE_REQUEST_CREATED",
-      "title": "Change Order Requested",
-      "description": "Requested upgrade to Italian Bottochino Marble (+₹1,20,000)",
-      "timestamp": "2026-08-25T14:00:00.000Z"
-    },
-    {
-      "id": "ledg-1",
-      "projectId": "prj-101",
-      "actorId": "usr-homeowner-1",
-      "actorName": "Rajesh Kumar",
-      "actorRole": "HOMEOWNER",
-      "eventType": "PROJECT_CREATED",
-      "title": "Project Initialized",
-      "description": "Rajesh Kumar created Sharma Residence project (Budget ₹45,00,000)",
-      "timestamp": "2026-02-01T09:00:00.000Z"
+      "title": "Electrical & Plumbing Rough-In",
+      "description": "Conduit laying, CPVC plumbing lines & distribution box installation.",
+      "plannedStartDate": "2026-07-01",
+      "plannedEndDate": "2026-09-15",
+      "actualEndDate": null,
+      "completionPercentage": 10,
+      "status": "IN_PROGRESS",
+      "allocatedBudget": 600000,
+      "dependsOnMilestoneId": "mls-2",
+      "downstreamImpactWarning": "⚠️ Electrical/plumbing conduit laying delayed by 3 days because superstructure brickwork shuttering is active."
     }
   ],
-  "documents": []
+  "contextualMessages": [],
+  "projectLedger": []
 }

@@ -9,14 +9,12 @@ import {
   FileText,
   AlertTriangle,
   GitPullRequest,
-  CreditCard,
   Building2,
   Layers,
-  BookOpen,
-  ClipboardList,
-  ShieldAlert,
+  ShieldCheck,
+  Award,
+  Home,
   BarChart3,
-  Search,
   ShoppingCart
 } from 'lucide-react';
 
@@ -26,12 +24,13 @@ export const Sidebar: React.FC = () => {
   const homeownerItems = [
     { id: 'dashboard', label: 'Owner Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: 'connected-project', label: 'Project Workspace', icon: <Layers className="w-4 h-4" /> },
-    { id: 'progress-timeline', label: 'Construction Progress', icon: <CheckSquare className="w-4 h-4" /> },
+    { id: 'progress-timeline', label: 'Timeline & Dependencies', icon: <CheckSquare className="w-4 h-4" /> },
     { id: 'financials', label: 'Financials & Budget', icon: <Wallet className="w-4 h-4" /> },
     { id: 'change-orders', label: 'Change Orders', icon: <GitPullRequest className="w-4 h-4" /> },
-    { id: 'issues', label: 'Issues & Defects', icon: <AlertTriangle className="w-4 h-4" /> },
+    { id: 'issues', label: 'Quality & Defects', icon: <ShieldCheck className="w-4 h-4" /> },
     { id: 'documents', label: 'Document Vault', icon: <FileText className="w-4 h-4" /> },
-    { id: 'team-roster', label: 'Contractor & Team', icon: <Users className="w-4 h-4" /> },
+    { id: 'handover', label: 'Digital Handover', icon: <Award className="w-4 h-4" /> },
+    { id: 'home-passport', label: 'Home Passport 🏠', icon: <Home className="w-4 h-4" /> },
   ];
 
   const builderItems = [
@@ -40,12 +39,13 @@ export const Sidebar: React.FC = () => {
     { id: 'budget-vs-actual', label: 'Budget vs Actual', icon: <Wallet className="w-4 h-4" /> },
     { id: 'team-roster', label: 'Labour & Team Roster', icon: <Users className="w-4 h-4" /> },
     { id: 'procurement', label: 'Internal Procurement', icon: <ShoppingCart className="w-4 h-4" /> },
-    { id: 'issues', label: 'Quality & Defects', icon: <AlertTriangle className="w-4 h-4" /> },
+    { id: 'issues', label: 'Quality & Defects', icon: <ShieldCheck className="w-4 h-4" /> },
+    { id: 'analytics-view', label: 'Contractor Analytics', icon: <BarChart3 className="w-4 h-4" /> },
     { id: 'connected-project', label: 'Project Hub', icon: <Layers className="w-4 h-4" /> },
   ];
 
   const adminItems = [
-    { id: 'verifications', label: 'Verification Queue', icon: <ShieldAlert className="w-4 h-4" /> },
+    { id: 'verifications', label: 'Verification Queue', icon: <ShieldCheck className="w-4 h-4" /> },
     { id: 'analytics', label: 'Platform Analytics', icon: <BarChart3 className="w-4 h-4" /> },
   ];
 

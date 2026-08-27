@@ -10,7 +10,6 @@ import { MilestonesView } from './components/homeowner/MilestonesView';
 import { BuilderDiscoveryView } from './components/homeowner/BuilderDiscoveryView';
 import { IssueManagementView } from './components/homeowner/IssueManagementView';
 import { ChangeOrdersView } from './components/homeowner/ChangeOrdersView';
-import { PaymentsView } from './components/homeowner/PaymentsView';
 import { DocumentVaultView } from './components/homeowner/DocumentVaultView';
 import { VerifiedReviewsView } from './components/homeowner/VerifiedReviewsView';
 import { OwnerMaterialTraceabilityView } from './components/homeowner/OwnerMaterialTraceabilityView';
@@ -20,6 +19,12 @@ import { BOQEstimationView } from './components/builder/BOQEstimationView';
 import { BudgetVsActualView } from './components/builder/BudgetVsActualView';
 import { InternalProcurementView } from './components/builder/InternalProcurementView';
 import { ConstructionTeamRosterView } from './components/builder/ConstructionTeamRosterView';
+import { ContractorAnalyticsView } from './components/builder/ContractorAnalyticsView';
+
+import { SmartTimelineView } from './components/common/SmartTimelineView';
+import { QualityDefectsView } from './components/common/QualityDefectsView';
+import { DigitalHandoverView } from './components/common/DigitalHandoverView';
+import { HomePassportView } from './components/common/HomePassportView';
 
 import { AdminConsole } from './components/admin/AdminConsole';
 import { AnalyticsDashboardView } from './components/common/AnalyticsDashboardView';
@@ -37,14 +42,17 @@ const MainContent: React.FC = () => {
     if (activeTab === 'connected-project') return <ConnectedProjectView />;
     if (activeTab === 'traceability') return <OwnerMaterialTraceabilityView />;
     if (activeTab === 'team-roster') return <ConstructionTeamRosterView />;
+    if (activeTab === 'handover') return <DigitalHandoverView />;
+    if (activeTab === 'home-passport') return <HomePassportView />;
+    if (activeTab === 'analytics-view') return <ContractorAnalyticsView />;
 
     if (currentUser.role === 'HOMEOWNER') {
       switch (activeTab) {
         case 'dashboard': return <HomeownerDashboard />;
         case 'financials': return <BudgetDashboardView />;
-        case 'progress-timeline': return <MilestonesView />;
+        case 'progress-timeline': return <SmartTimelineView />;
         case 'change-orders': return <ChangeOrdersView />;
-        case 'issues': return <IssueManagementView />;
+        case 'issues': return <QualityDefectsView />;
         case 'documents': return <DocumentVaultView />;
         case 'builders': return <BuilderDiscoveryView />;
         case 'reviews': return <VerifiedReviewsView />;
@@ -56,7 +64,7 @@ const MainContent: React.FC = () => {
         case 'boq-estimation': return <BOQEstimationView />;
         case 'budget-vs-actual': return <BudgetVsActualView />;
         case 'procurement': return <InternalProcurementView />;
-        case 'issues': return <IssueManagementView />;
+        case 'issues': return <QualityDefectsView />;
         default: return <BuilderDashboard />;
       }
     } else if (currentUser.role === 'ADMIN') {

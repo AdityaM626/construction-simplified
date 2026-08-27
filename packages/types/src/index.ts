@@ -124,6 +124,74 @@ export interface Milestone {
   status: MilestoneStatus;
   allocatedBudget: number;
   requiresOwnerApproval?: boolean;
+  dependsOnMilestoneId?: string;
+  downstreamImpactWarning?: string;
+}
+
+export interface QualityCheckpoint {
+  id: string;
+  projectId: string;
+  title: string;
+  category: 'WATERPROOFING' | 'CONCRETE_CURING' | 'REBAR_SPACING' | 'SHUTTERING' | 'PLUMBING_LEAK_TEST' | 'ELECTRICAL_EARTHING';
+  status: 'PASS' | 'FAIL' | 'REWORK_REQUIRED';
+  inspectorName: string;
+  inspectionDate: string;
+  notes: string;
+  photoUrls: string[];
+}
+
+export interface DefectRecord {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string;
+  defectType: 'CRACK' | 'SEEPAGE' | 'PAINT_DEFECT' | 'ELECTRICAL_FAULT' | 'PLUMBING_LEAK' | 'OTHER';
+  location: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  responsibleTrade: string;
+  reworkTimeDays: number;
+  reworkCost: number;
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'VERIFIED_CLOSED';
+  discoveredDate: string;
+  resolvedDate?: string;
+  photoUrl?: string;
+}
+
+export interface DigitalHandoverRecord {
+  id: string;
+  projectId: string;
+  handoverDate: string;
+  finalContractValue: number;
+  finalAmountPaid: number;
+  outstandingBalance: number;
+  openDefectsCount: number;
+  isFinalInspectionPassed: boolean;
+  homeownerConfirmed: boolean;
+  homeownerConfirmedAt?: string;
+  contractorConfirmed: boolean;
+  contractorConfirmedAt?: string;
+  documentsBundle: { name: string; category: string; url: string }[];
+}
+
+export interface HomePassportRecord {
+  id: string;
+  projectId: string;
+  propertyName: string;
+  address: string;
+  builtUpAreaSqFt: number;
+  floorsCount: number;
+  constructionStartDate: string;
+  handoverDate: string;
+  contractorName: string;
+  contractorPhone: string;
+  systems: {
+    electrical: { dbBoardLocation: string; wiringBrand: string; mainBreakerCapacity: string };
+    plumbing: { pipeBrand: string; pumpSpecs: string; tankCapacityLiters: number };
+    waterproofing: { chemicalBrand: string; warrantyYears: number };
+    paint: { interiorBrand: string; exteriorBrand: string };
+    flooring: { materialType: string; brand: string };
+  };
+  maintenanceHistory: { date: string; title: string; category: string; cost: number; performedBy: string }[];
 }
 
 export interface BOQItem {

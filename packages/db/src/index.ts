@@ -15,6 +15,10 @@ import {
   DocumentRecord,
   ContextualMessage,
   ProjectLedgerEvent,
+  QualityCheckpoint,
+  DefectRecord,
+  DigitalHandoverRecord,
+  HomePassportRecord,
   UserRole
 } from '@construction-os/types';
 
@@ -34,6 +38,10 @@ class ConstructionDatabase {
   public documents: DocumentRecord[];
   public contextualMessages: ContextualMessage[];
   public projectLedger: ProjectLedgerEvent[];
+  public qualityCheckpoints: QualityCheckpoint[];
+  public defectRecords: DefectRecord[];
+  public digitalHandover: DigitalHandoverRecord;
+  public homePassport: HomePassportRecord;
 
   constructor() {
     this.users = JSON.parse(JSON.stringify(seedData.users)) as User[];
@@ -51,6 +59,10 @@ class ConstructionDatabase {
     this.documents = (seedData as any).documents ? JSON.parse(JSON.stringify((seedData as any).documents)) : [];
     this.contextualMessages = (seedData as any).contextualMessages ? JSON.parse(JSON.stringify((seedData as any).contextualMessages)) : [];
     this.projectLedger = (seedData as any).projectLedger ? JSON.parse(JSON.stringify((seedData as any).projectLedger)) : [];
+    this.qualityCheckpoints = (seedData as any).qualityCheckpoints ? JSON.parse(JSON.stringify((seedData as any).qualityCheckpoints)) : [];
+    this.defectRecords = (seedData as any).defectRecords ? JSON.parse(JSON.stringify((seedData as any).defectRecords)) : [];
+    this.digitalHandover = (seedData as any).digitalHandover ? JSON.parse(JSON.stringify((seedData as any).digitalHandover)) : {} as any;
+    this.homePassport = (seedData as any).homePassport ? JSON.parse(JSON.stringify((seedData as any).homePassport)) : {} as any;
   }
 
   public logLedger(projectId: string, actorId: string, actorName: string, actorRole: any, eventType: any, title: string, description: string, entityId?: string, metadata?: any) {
