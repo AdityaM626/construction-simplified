@@ -112,6 +112,45 @@ export interface Project {
   createdAt: string;
 }
 
+export interface MultiDimensionHealth {
+  overall: ProjectHealthStatus;
+  explanation: string;
+  dimensions: {
+    schedule: { status: ProjectHealthStatus; detail: string };
+    budget: { status: ProjectHealthStatus; detail: string };
+    quality: { status: ProjectHealthStatus; detail: string };
+    payments: { status: ProjectHealthStatus; detail: string };
+    approvals: { status: ProjectHealthStatus; detail: string };
+  };
+}
+
+export interface ActionItem {
+  id: string;
+  projectId: string;
+  projectName: string;
+  targetRole: UserRole;
+  priority: 'CRITICAL' | 'HIGH' | 'NORMAL';
+  title: string;
+  description: string;
+  actionText: string;
+  objectType: 'CHANGE_ORDER' | 'MILESTONE' | 'PAYMENT' | 'ISSUE' | 'DOCUMENT' | 'SITE_REPORT';
+  objectId: string;
+  dueDate?: string;
+  status: 'PENDING' | 'COMPLETED';
+  createdAt: string;
+}
+
+export interface BeforeAfterEvidence {
+  id: string;
+  projectId: string;
+  title: string;
+  category: string;
+  beforePhotoUrl: string;
+  afterPhotoUrl: string;
+  description: string;
+  dateCompleted: string;
+}
+
 export interface Milestone {
   id: string;
   projectId: string;

@@ -15,7 +15,11 @@ import {
   Award,
   Home,
   BarChart3,
-  ShoppingCart
+  ShoppingCart,
+  Clock,
+  Camera,
+  CheckCircle2,
+  Activity
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -23,8 +27,11 @@ export const Sidebar: React.FC = () => {
 
   const homeownerItems = [
     { id: 'dashboard', label: 'Owner Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: 'action-center', label: 'Action Center', icon: <AlertTriangle className="w-4 h-4" /> },
+    { id: 'health-breakdown', label: '5D Health Breakdown', icon: <Activity className="w-4 h-4" /> },
     { id: 'connected-project', label: 'Project Workspace', icon: <Layers className="w-4 h-4" /> },
-    { id: 'progress-timeline', label: 'Timeline & Dependencies', icon: <CheckSquare className="w-4 h-4" /> },
+    { id: 'journal', label: 'Digital Site Diary', icon: <Camera className="w-4 h-4" /> },
+    { id: 'activity-stream', label: 'Activity Timeline', icon: <Clock className="w-4 h-4" /> },
     { id: 'financials', label: 'Financials & Budget', icon: <Wallet className="w-4 h-4" /> },
     { id: 'change-orders', label: 'Change Orders', icon: <GitPullRequest className="w-4 h-4" /> },
     { id: 'issues', label: 'Quality & Defects', icon: <ShieldCheck className="w-4 h-4" /> },
@@ -35,8 +42,10 @@ export const Sidebar: React.FC = () => {
 
   const builderItems = [
     { id: 'projects', label: 'Contractor Dashboard', icon: <Building2 className="w-4 h-4" /> },
+    { id: 'action-center', label: 'Action Center', icon: <AlertTriangle className="w-4 h-4" /> },
     { id: 'boq-estimation', label: 'BOQ & Estimation', icon: <FileSpreadsheet className="w-4 h-4" /> },
     { id: 'budget-vs-actual', label: 'Budget vs Actual', icon: <Wallet className="w-4 h-4" /> },
+    { id: 'journal', label: 'Digital Site Diary', icon: <Camera className="w-4 h-4" /> },
     { id: 'team-roster', label: 'Labour & Team Roster', icon: <Users className="w-4 h-4" /> },
     { id: 'procurement', label: 'Internal Procurement', icon: <ShoppingCart className="w-4 h-4" /> },
     { id: 'issues', label: 'Quality & Defects', icon: <ShieldCheck className="w-4 h-4" /> },

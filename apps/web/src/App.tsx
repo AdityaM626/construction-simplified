@@ -26,6 +26,11 @@ import { QualityDefectsView } from './components/common/QualityDefectsView';
 import { DigitalHandoverView } from './components/common/DigitalHandoverView';
 import { HomePassportView } from './components/common/HomePassportView';
 
+import { ActionCenterView } from './components/common/ActionCenterView';
+import { MultiDimensionHealthView } from './components/common/MultiDimensionHealthView';
+import { ActivityTimelineView } from './components/common/ActivityTimelineView';
+import { ConstructionJournalView } from './components/common/ConstructionJournalView';
+
 import { AdminConsole } from './components/admin/AdminConsole';
 import { AnalyticsDashboardView } from './components/common/AnalyticsDashboardView';
 import { ConnectedProjectView } from './components/common/ConnectedProjectView';
@@ -40,6 +45,10 @@ const MainContent: React.FC = () => {
     if (activeTab === 'public') return <PublicLandingPage />;
     if (activeTab === 'workshops') return <WorkshopsView />;
     if (activeTab === 'connected-project') return <ConnectedProjectView />;
+    if (activeTab === 'action-center') return <ActionCenterView />;
+    if (activeTab === 'health-breakdown') return <MultiDimensionHealthView />;
+    if (activeTab === 'journal') return <ConstructionJournalView />;
+    if (activeTab === 'activity-stream') return <ActivityTimelineView />;
     if (activeTab === 'traceability') return <OwnerMaterialTraceabilityView />;
     if (activeTab === 'team-roster') return <ConstructionTeamRosterView />;
     if (activeTab === 'handover') return <DigitalHandoverView />;

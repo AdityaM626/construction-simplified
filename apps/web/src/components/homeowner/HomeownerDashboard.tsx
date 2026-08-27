@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { ChangeOrderApprovalModal } from './ChangeOrderApprovalModal';
+import { ProjectSnapshotModal } from '../common/ProjectSnapshotModal';
 import { ContextualChatModal } from '../common/ContextualChatModal';
 import { Badge } from '../common/Badge';
 import {
@@ -15,12 +16,14 @@ import {
   FileText,
   DollarSign,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Camera
 } from 'lucide-react';
 
 export const HomeownerDashboard: React.FC = () => {
   const { setActiveTab } = useAuth();
   const [showChangeModal, setShowChangeModal] = useState(false);
+  const [showSnapshotModal, setShowSnapshotModal] = useState(false);
   const [chatConfig, setChatConfig] = useState<{ isOpen: boolean; entityType: any; entityId: string; title: string }>({
     isOpen: false,
     entityType: 'PROJECT',
@@ -97,13 +100,21 @@ export const HomeownerDashboard: React.FC = () => {
           <p className="text-xs text-slate-400">{project.location} • Contractor: <b className="text-slate-700">{project.builderName}</b></p>
         </div>
 
-        <button
-          onClick={() => setChatConfig({ isOpen: true, entityType: 'PROJECT', entityId: project.id, title: 'Contextual Project Discussion' })}
-          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-2 shrink-0"
-        >
-          <MessageSquare className="w-3.5 h-3.5" />
-          <span>Discuss with Contractor</span>
-        </button>
+        <div className="flex items-center space-x-2 shrink-0">
+          <button
+            onClick={() => setShowSnapshotModal(true)}
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-all border border-slate-200"
+          >
+            📸 Project Snapshot
+          </button>
+          <button
+            onClick={() => setChatConfig({ isOpen: true, entityType: 'PROJECT', entityId: project.id, title: 'Contextual Project Discussion' })}
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-2"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Discuss</span>
+          </button>
+        </div>
       </div>
 
       {/* ⚠️ HIGH VISIBILITY ACTION REQUIRED PANEL */}
@@ -198,54 +209,8 @@ export const HomeownerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Navigation Links */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <button
-          onClick={() => setActiveTab('connected-project')}
-          className="p-5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-100 shadow-2xs text-left space-y-2 transition-all"
-        >
-          <Layers className="w-5 h-5 text-blue-600" />
-          <div>
-            <span className="text-xs font-bold text-slate-900 block">Project Workspace</span>
-            <span className="text-[11px] text-slate-400 block">Detailed sections</span>
-          </div>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('change-orders')}
-          className="p-5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-100 shadow-2xs text-left space-y-2 transition-all"
-        >
-          <GitPullRequest className="w-5 h-5 text-amber-600" />
-          <div>
-            <span className="text-xs font-bold text-slate-900 block">Change Orders</span>
-            <span className="text-[11px] text-slate-400 block">Review & approve</span>
-          </div>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('issues')}
-          className="p-5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-100 shadow-2xs text-left space-y-2 transition-all"
-        >
-          <AlertTriangle className="w-5 h-5 text-rose-600" />
-          <div>
-            <span className="text-xs font-bold text-slate-900 block">Defects & Issues</span>
-            <span className="text-[11px] text-slate-400 block">Track resolution</span>
-          </div>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('documents')}
-          className="p-5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-100 shadow-2xs text-left space-y-2 transition-all"
-        >
-          <FileText className="w-5 h-5 text-indigo-600" />
-          <div>
-            <span className="text-xs font-bold text-slate-900 block">Document Vault</span>
-            <span className="text-[11px] text-slate-400 block">Contracts & plans</span>
-          </div>
-        </button>
-      </div>
-
       <ChangeOrderApprovalModal isOpen={showChangeModal} onClose={() => setShowChangeModal(false)} />
+      <ProjectSnapshotModal isOpen={showSnapshotModal} onClose={() => setShowSnapshotModal(false)} />
       
       {chatConfig.isOpen && (
         <ContextualChatModal
