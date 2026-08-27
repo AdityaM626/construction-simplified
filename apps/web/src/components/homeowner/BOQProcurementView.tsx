@@ -64,7 +64,7 @@ export const BOQProcurementView: React.FC = () => {
     ]
   };
 
-  const remainingValue = boq.totalEstimatedValue - boq.orderedValue;
+  const remainingValue = boq.totalEstimatedValue - (boq.orderedValue || 0);
 
   return (
     <div className="space-y-6">
@@ -91,11 +91,11 @@ export const BOQProcurementView: React.FC = () => {
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-200">
           <span className="text-xs font-semibold text-slate-500">Ordered to Date</span>
-          <p className="text-2xl font-bold text-amber-600 mt-1 font-tabular">₹{boq.orderedValue.toLocaleString('en-IN')}</p>
+          <p className="text-2xl font-bold text-amber-600 mt-1 font-tabular">₹{(boq.orderedValue || 0).toLocaleString('en-IN')}</p>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-200">
           <span className="text-xs font-semibold text-slate-500">Delivered & Verified</span>
-          <p className="text-2xl font-bold text-emerald-700 mt-1 font-tabular">₹{boq.deliveredValue.toLocaleString('en-IN')}</p>
+          <p className="text-2xl font-bold text-emerald-700 mt-1 font-tabular">₹{(boq.deliveredValue || 0).toLocaleString('en-IN')}</p>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-200">
           <span className="text-xs font-semibold text-slate-500">Remaining Gap</span>
@@ -109,16 +109,18 @@ export const BOQProcurementView: React.FC = () => {
         
         <div className="space-y-4">
           {boq.items.map((item) => {
-            const remainingQty = item.requiredQty - item.orderedQty;
-            const pctOrdered = ((item.orderedQty / item.requiredQty) * 100).toFixed(0);
+            const req = item.requiredQty || 0;
+            const ord = item.orderedQty || 0;
+            const remainingQty = req - ord;
+            const pctOrdered = req > 0 ? ((ord / req) * 100).toFixed(0) : '0';
             return (
               <div key={item.id} className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h4 className="font-bold text-sm text-slate-900">{item.itemName}</h4>
-                    <p className="text-xs text-slate-500">{item.specification}</p>
+                    <p className="text-xs text-slate-500">{item.specification || item.description}</p>
                   </div>
-                  <Badge status={item.status} />
+                  <Badge status={item.status || 'PLANNED'} />
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs bg-white p-3 rounded-lg border border-slate-200/80 font-medium">

@@ -41,73 +41,6 @@ export interface InventoryMovement {
   reason: string;
 }
 
-export interface BOQ {
-  id: string;
-  projectId: string;
-  title: string;
-  totalEstimatedValue: number;
-  orderedValue: number;
-  deliveredValue: number;
-  items: any[];
-  createdAt: string;
-}
-
-export interface ChangeOrder {
-  id: string;
-  projectId: string;
-  title: string;
-  description?: string;
-  reason?: string;
-  originalScope?: string;
-  proposedChange?: string;
-  costImpact: number;
-  timelineImpactDays: number;
-  requestedBy: string;
-  requestedByRole?: string;
-  approvedBy?: string;
-  approvedAt?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'UNDER_REVIEW';
-  createdAt: string;
-}
-
-export interface IssueRecord {
-  id: string;
-  projectId: string;
-  title: string;
-  description: string;
-  category?: string;
-  createdBy?: string;
-  createdByRole?: string;
-  assignedTo?: string;
-  photoUrl?: string;
-  resolutionNotes?: string;
-  resolvedAt?: string;
-  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
-  createdAt: string;
-}
-
-export type IssueSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-export type IssueStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
-
-export interface PaymentTransaction {
-  id: string;
-  projectId: string;
-  orderId?: string;
-  payerId?: string;
-  payeeId?: string;
-  currency?: string;
-  receiptUrl?: string;
-  transactionReference: string;
-  amount: number;
-  type?: string;
-  payerName?: string;
-  payeeName?: string;
-  paymentMethod?: string;
-  status: 'PAID' | 'PENDING' | 'FAILED' | 'SUCCESS';
-  timestamp: string;
-}
-
 export interface ReviewItem {
   id: string;
   authorId?: string;
@@ -124,16 +57,4 @@ export interface ReviewItem {
   isVerifiedInteraction: boolean;
   timestamp?: string;
   createdAt?: string;
-}
-
-export interface DocumentRecord {
-  id: string;
-  projectId: string;
-  title: string;
-  category: 'DRAWING' | 'INVOICE' | 'PERMIT' | 'CONTRACT' | 'OTHER';
-  fileUrl: string;
-  uploadedBy: string;
-  uploadedByRole: any;
-  sizeBytes: number;
-  uploadedAt: string;
 }

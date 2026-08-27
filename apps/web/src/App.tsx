@@ -6,9 +6,7 @@ import { MobileNav } from './components/common/MobileNav';
 
 import { HomeownerDashboard } from './components/homeowner/HomeownerDashboard';
 import { BudgetDashboardView } from './components/homeowner/BudgetDashboardView';
-import { BOQProcurementView } from './components/homeowner/BOQProcurementView';
 import { MilestonesView } from './components/homeowner/MilestonesView';
-import { MaterialMarketplaceView } from './components/homeowner/MaterialMarketplaceView';
 import { BuilderDiscoveryView } from './components/homeowner/BuilderDiscoveryView';
 import { IssueManagementView } from './components/homeowner/IssueManagementView';
 import { ChangeOrdersView } from './components/homeowner/ChangeOrdersView';
@@ -18,11 +16,10 @@ import { VerifiedReviewsView } from './components/homeowner/VerifiedReviewsView'
 import { OwnerMaterialTraceabilityView } from './components/homeowner/OwnerMaterialTraceabilityView';
 
 import { BuilderDashboard } from './components/builder/BuilderDashboard';
-import { BuilderTasksMarginView } from './components/builder/BuilderTasksMarginView';
+import { BOQEstimationView } from './components/builder/BOQEstimationView';
+import { BudgetVsActualView } from './components/builder/BudgetVsActualView';
+import { InternalProcurementView } from './components/builder/InternalProcurementView';
 import { ConstructionTeamRosterView } from './components/builder/ConstructionTeamRosterView';
-
-import { DealerDashboard } from './components/dealer/DealerDashboard';
-import { InventoryManagementView } from './components/dealer/InventoryManagementView';
 
 import { AdminConsole } from './components/admin/AdminConsole';
 import { AnalyticsDashboardView } from './components/common/AnalyticsDashboardView';
@@ -44,38 +41,28 @@ const MainContent: React.FC = () => {
     if (currentUser.role === 'HOMEOWNER') {
       switch (activeTab) {
         case 'dashboard': return <HomeownerDashboard />;
-        case 'budget': return <BudgetDashboardView />;
-        case 'boq': return <BOQProcurementView />;
-        case 'milestones': return <MilestonesView />;
-        case 'materials': return <MaterialMarketplaceView />;
-        case 'builders': return <BuilderDiscoveryView />;
-        case 'issues': return <IssueManagementView />;
+        case 'financials': return <BudgetDashboardView />;
+        case 'progress-timeline': return <MilestonesView />;
         case 'change-orders': return <ChangeOrdersView />;
-        case 'payments': return <PaymentsView />;
+        case 'issues': return <IssueManagementView />;
         case 'documents': return <DocumentVaultView />;
+        case 'builders': return <BuilderDiscoveryView />;
         case 'reviews': return <VerifiedReviewsView />;
-        case 'analytics': return <AnalyticsDashboardView />;
         default: return <HomeownerDashboard />;
       }
     } else if (currentUser.role === 'BUILDER') {
       switch (activeTab) {
         case 'projects': return <BuilderDashboard />;
-        case 'tasks': return <BuilderTasksMarginView />;
-        case 'updates': return <BuilderDashboard />;
+        case 'boq-estimation': return <BOQEstimationView />;
+        case 'budget-vs-actual': return <BudgetVsActualView />;
+        case 'procurement': return <InternalProcurementView />;
         case 'issues': return <IssueManagementView />;
         default: return <BuilderDashboard />;
-      }
-    } else if (currentUser.role === 'DEALER') {
-      switch (activeTab) {
-        case 'inventory': return <InventoryManagementView />;
-        case 'orders': return <DealerDashboard />;
-        default: return <InventoryManagementView />;
       }
     } else if (currentUser.role === 'ADMIN') {
       switch (activeTab) {
         case 'verifications': return <AdminConsole />;
         case 'analytics': return <AnalyticsDashboardView />;
-        case 'audit': return <AdminConsole />;
         default: return <AdminConsole />;
       }
     }

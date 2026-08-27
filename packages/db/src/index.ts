@@ -3,15 +3,18 @@ import {
   User,
   ConstructionTeamMember,
   BuilderProfile,
-  DealerProfile,
   Project,
-  MaterialRequirement,
-  Product,
-  OrderRequest,
-  DeliveryJob,
-  ProjectLedgerEvent,
   Milestone,
   SiteUpdate,
+  BOQ,
+  BudgetVsActualRecord,
+  DailySiteReport,
+  VendorProcurementRecord,
+  ChangeOrder,
+  IssueRecord,
+  DocumentRecord,
+  ContextualMessage,
+  ProjectLedgerEvent,
   UserRole
 } from '@construction-os/types';
 
@@ -19,29 +22,35 @@ class ConstructionDatabase {
   public users: User[];
   public constructionTeamMembers: ConstructionTeamMember[];
   public builderProfiles: BuilderProfile[];
-  public dealerProfiles: DealerProfile[];
   public projects: Project[];
-  public materialRequirements: MaterialRequirement[];
-  public products: Product[];
-  public orderRequests: OrderRequest[];
-  public deliveryJobs: DeliveryJob[];
-  public projectLedger: ProjectLedgerEvent[];
   public milestones: Milestone[];
   public siteUpdates: SiteUpdate[];
+  public boqs: BOQ[];
+  public budgetVsActualRecords: BudgetVsActualRecord[];
+  public dailySiteReports: DailySiteReport[];
+  public vendorProcurementRecords: VendorProcurementRecord[];
+  public changeOrders: ChangeOrder[];
+  public issues: IssueRecord[];
+  public documents: DocumentRecord[];
+  public contextualMessages: ContextualMessage[];
+  public projectLedger: ProjectLedgerEvent[];
 
   constructor() {
     this.users = JSON.parse(JSON.stringify(seedData.users)) as User[];
     this.constructionTeamMembers = (seedData as any).constructionTeamMembers ? JSON.parse(JSON.stringify((seedData as any).constructionTeamMembers)) : [];
     this.builderProfiles = JSON.parse(JSON.stringify(seedData.builderProfiles)) as BuilderProfile[];
-    this.dealerProfiles = JSON.parse(JSON.stringify(seedData.dealerProfiles)) as DealerProfile[];
     this.projects = JSON.parse(JSON.stringify(seedData.projects)) as Project[];
-    this.materialRequirements = (seedData as any).materialRequirements ? JSON.parse(JSON.stringify((seedData as any).materialRequirements)) : [];
-    this.products = JSON.parse(JSON.stringify(seedData.products)) as Product[];
-    this.orderRequests = JSON.parse(JSON.stringify(seedData.orderRequests)) as OrderRequest[];
-    this.deliveryJobs = (seedData as any).deliveryJobs ? JSON.parse(JSON.stringify((seedData as any).deliveryJobs)) : [];
-    this.projectLedger = (seedData as any).projectLedger ? JSON.parse(JSON.stringify((seedData as any).projectLedger)) : [];
     this.milestones = JSON.parse(JSON.stringify(seedData.milestones)) as Milestone[];
     this.siteUpdates = (seedData as any).siteUpdates ? JSON.parse(JSON.stringify((seedData as any).siteUpdates)) : [];
+    this.boqs = (seedData as any).boqs ? JSON.parse(JSON.stringify((seedData as any).boqs)) : [];
+    this.budgetVsActualRecords = (seedData as any).budgetVsActualRecords ? JSON.parse(JSON.stringify((seedData as any).budgetVsActualRecords)) : [];
+    this.dailySiteReports = (seedData as any).dailySiteReports ? JSON.parse(JSON.stringify((seedData as any).dailySiteReports)) : [];
+    this.vendorProcurementRecords = (seedData as any).vendorProcurementRecords ? JSON.parse(JSON.stringify((seedData as any).vendorProcurementRecords)) : [];
+    this.changeOrders = (seedData as any).changeOrders ? JSON.parse(JSON.stringify((seedData as any).changeOrders)) : [];
+    this.issues = (seedData as any).issues ? JSON.parse(JSON.stringify((seedData as any).issues)) : [];
+    this.documents = (seedData as any).documents ? JSON.parse(JSON.stringify((seedData as any).documents)) : [];
+    this.contextualMessages = (seedData as any).contextualMessages ? JSON.parse(JSON.stringify((seedData as any).contextualMessages)) : [];
+    this.projectLedger = (seedData as any).projectLedger ? JSON.parse(JSON.stringify((seedData as any).projectLedger)) : [];
   }
 
   public logLedger(projectId: string, actorId: string, actorName: string, actorRole: any, eventType: any, title: string, description: string, entityId?: string, metadata?: any) {

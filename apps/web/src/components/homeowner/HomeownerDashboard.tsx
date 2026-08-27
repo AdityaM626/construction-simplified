@@ -1,108 +1,235 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { ProjectOnboardingModal } from './ProjectOnboardingModal';
-import { Plus, ArrowRight, ShieldCheck, CheckCircle2, Wallet, ShoppingCart, CheckSquare, FileText } from 'lucide-react';
+import { ChangeOrderApprovalModal } from './ChangeOrderApprovalModal';
+import { ContextualChatModal } from '../common/ContextualChatModal';
+import { Badge } from '../common/Badge';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  ArrowRight,
+  ShieldCheck,
+  Building2,
+  GitPullRequest,
+  MessageSquare,
+  FileText,
+  DollarSign,
+  Layers,
+  ChevronRight
+} from 'lucide-react';
 
 export const HomeownerDashboard: React.FC = () => {
   const { setActiveTab } = useAuth();
-  const [showOnboarding, setShowOnboarding] = useState(false);
-
-  const [project] = useState({
-    name: 'Sharma Residence / Kumar Villa (4BHK)',
-    location: 'Plot #42, Palm Meadows Enclave, Whitefield, Bengaluru',
-    totalBudget: 4500000,
-    spentCost: 1820000,
-    committedCost: 850000,
-    builderName: 'Apex Infrastructure & Builders',
-    completionPercentage: 46,
-    targetCompletionDate: '2027-03-31'
+  const [showChangeModal, setShowChangeModal] = useState(false);
+  const [chatConfig, setChatConfig] = useState<{ isOpen: boolean; entityType: any; entityId: string; title: string }>({
+    isOpen: false,
+    entityType: 'PROJECT',
+    entityId: 'prj-101',
+    title: 'Project Discussion'
   });
 
-  const remainingBudget = project.totalBudget - (project.spentCost + project.committedCost);
+  const project = {
+    id: 'prj-101',
+    name: 'Sharma Residence / Kumar Villa (4BHK)',
+    location: 'Plot #42, Palm Meadows Enclave, Whitefield, Bengaluru',
+    builderName: 'Apex Infrastructure & Builders',
+    contractValue: 4500000,
+    spentCost: 1820000,
+    committedCost: 850000,
+    paidAmount: 1820000,
+    completionPercentage: 46,
+    currentPhase: 'Ground & First Floor Superstructure',
+    targetCompletionDate: '2027-03-31',
+    projectHealth: 'HEALTHY' as const,
+    healthReason: 'Project execution on schedule with minor 2.1% material rate variance'
+  };
+
+  const remainingContractValue = project.contractValue - project.paidAmount;
+
+  const constructionPhases = [
+    { num: 1, name: 'Planning', status: 'COMPLETED' },
+    { num: 2, name: 'Design', status: 'COMPLETED' },
+    { num: 3, name: 'Foundation', status: 'COMPLETED' },
+    { num: 4, name: 'Structure', status: 'IN_PROGRESS' },
+    { num: 5, name: 'Brickwork', status: 'UPCOMING' },
+    { num: 6, name: 'Electrical & Plumbing', status: 'UPCOMING' },
+    { num: 7, name: 'Flooring', status: 'UPCOMING' },
+    { num: 8, name: 'Painting', status: 'UPCOMING' },
+    { num: 9, name: 'Fixtures', status: 'UPCOMING' },
+    { num: 10, name: 'Finishing', status: 'UPCOMING' },
+    { num: 11, name: 'Inspection', status: 'UPCOMING' },
+    { num: 12, name: 'Handover', status: 'UPCOMING' }
+  ];
+
+  const actionItems = [
+    {
+      id: 'cho-101',
+      type: 'CHANGE_ORDER',
+      title: 'Upgrade to Italian Marble Flooring in Master Living Room',
+      impact: '+₹1,20,000 • +4 Days',
+      actionText: 'Review & Approve Change Order',
+      onClick: () => setShowChangeModal(true)
+    },
+    {
+      id: 'mls-2',
+      type: 'MILESTONE_APPROVAL',
+      title: 'Ground & First Floor Superstructure Shuttering Approval',
+      impact: 'Superstructure Phase • 72% Complete',
+      actionText: 'Review Milestone & Approve',
+      onClick: () => setActiveTab('connected-project')
+    }
+  ];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-10 py-4">
+    <div className="max-w-4xl mx-auto space-y-8 py-4">
       {/* Calm Hero Greeting */}
-      <div className="space-y-2">
-        <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider block">Project Overview</span>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{project.name}</h1>
-        <p className="text-xs text-slate-400">{project.location} • Target Completion: {project.targetCompletionDate}</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider block">Owner OS Dashboard</span>
+            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${
+              project.projectHealth === 'HEALTHY' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-100'
+            }`}>
+              ● {project.projectHealth}
+            </span>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{project.name}</h1>
+          <p className="text-xs text-slate-400">{project.location} • Contractor: <b className="text-slate-700">{project.builderName}</b></p>
+        </div>
+
+        <button
+          onClick={() => setChatConfig({ isOpen: true, entityType: 'PROJECT', entityId: project.id, title: 'Contextual Project Discussion' })}
+          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-2 shrink-0"
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span>Discuss with Contractor</span>
+        </button>
       </div>
 
-      {/* 3 Key Metrics Cards */}
+      {/* ⚠️ HIGH VISIBILITY ACTION REQUIRED PANEL */}
+      {actionItems.length > 0 && (
+        <div className="bg-amber-50/70 border border-amber-200/80 rounded-3xl p-6 space-y-4 shadow-2xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 text-amber-800">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+              <h3 className="font-bold text-sm">Action Required ({actionItems.length} Pending Approval)</h3>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 px-2.5 py-0.5 rounded-md">
+              High Priority
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {actionItems.map((item) => (
+              <div key={item.id} className="bg-white p-4 rounded-2xl border border-amber-100/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                  <h4 className="font-bold text-xs text-slate-900">{item.title}</h4>
+                  <span className="text-[11px] text-amber-700 font-semibold mt-0.5 block">{item.impact}</span>
+                </div>
+                <button
+                  onClick={item.onClick}
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5 shadow-2xs shrink-0"
+                >
+                  <span>{item.actionText}</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Financial Health Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-2xs space-y-1">
-          <span className="text-xs font-semibold text-slate-400">Total Spent / Budget</span>
+          <span className="text-xs font-semibold text-slate-400">Total Contract Value</span>
           <p className="text-2xl font-bold text-slate-900 font-tabular">
-            ₹{(project.spentCost / 100000).toFixed(1)}L <span className="text-slate-300 font-normal text-lg">/ ₹{(project.totalBudget / 100000).toFixed(0)}L</span>
+            ₹{(project.contractValue / 100000).toFixed(1)}L
           </p>
-          <span className="text-[11px] text-emerald-600 font-medium block">
-            {((project.spentCost / project.totalBudget) * 100).toFixed(0)}% budget utilized
+          <span className="text-[11px] text-slate-400 block">Baseline agreed budget</span>
+        </div>
+
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-2xs space-y-1">
+          <span className="text-xs font-semibold text-slate-400">Amount Paid to Date</span>
+          <p className="text-2xl font-bold text-emerald-700 font-tabular">
+            ₹{(project.paidAmount / 100000).toFixed(1)}L
+          </p>
+          <span className="text-[11px] text-emerald-600 font-semibold block">
+            {((project.paidAmount / project.contractValue) * 100).toFixed(0)}% paid to contractor
           </span>
         </div>
 
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-2xs space-y-1">
-          <span className="text-xs font-semibold text-slate-400">Overall Construction</span>
-          <p className="text-2xl font-bold text-blue-600 font-tabular">{project.completionPercentage}%</p>
-          <span className="text-[11px] text-slate-400 block">Superstructure phase active</span>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-2xs space-y-1">
-          <span className="text-xs font-semibold text-slate-400">Assigned Contractor</span>
-          <p className="text-sm font-bold text-slate-900 truncate mt-1">{project.builderName}</p>
-          <span className="text-[11px] text-emerald-600 font-semibold block flex items-center space-x-1">
-            <CheckCircle2 className="w-3 h-3" />
-            <span>Verified Builder (14 Yrs Exp)</span>
-          </span>
+          <span className="text-xs font-semibold text-slate-400">Remaining Contract Balance</span>
+          <p className="text-2xl font-bold text-blue-600 font-tabular">
+            ₹{(remainingContractValue / 100000).toFixed(1)}L
+          </p>
+          <span className="text-[11px] text-blue-600 font-medium block">Milestone-linked disbursements</span>
         </div>
       </div>
 
-      {/* Clean Progress Bar Section */}
-      <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-2xs space-y-4">
+      {/* Visual 12-Phase Construction Timeline */}
+      <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-2xs space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-900">Construction Milestone Progress</h3>
-          <span className="text-xs text-blue-600 font-bold">{project.completionPercentage}% Complete</span>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">Construction Journey Timeline</h3>
+            <p className="text-xs text-slate-400">Active Phase: <b>{project.currentPhase}</b></p>
+          </div>
+          <span className="text-xs font-bold text-blue-600">{project.completionPercentage}% Overall Complete</span>
         </div>
-        <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-          <div
-            className="bg-blue-600 h-full rounded-full transition-all duration-500"
-            style={{ width: `${project.completionPercentage}%` }}
-          />
+
+        {/* Phase Timeline Stepper */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {constructionPhases.map((phase) => (
+            <div
+              key={phase.num}
+              className={`p-3 rounded-2xl text-center space-y-1 border transition-all ${
+                phase.status === 'COMPLETED'
+                  ? 'bg-emerald-50/70 border-emerald-100 text-emerald-800'
+                  : phase.status === 'IN_PROGRESS'
+                  ? 'bg-blue-50 border-blue-200 text-blue-900 ring-2 ring-blue-500/20 font-bold'
+                  : 'bg-slate-50/50 border-slate-100 text-slate-400'
+              }`}
+            >
+              <span className="text-[10px] block opacity-70">Phase {phase.num}</span>
+              <p className="text-xs truncate">{phase.name}</p>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* 4 Clean Workspace Navigation Links */}
+      {/* Quick Navigation Links */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <button
           onClick={() => setActiveTab('connected-project')}
           className="p-5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-100 shadow-2xs text-left space-y-2 transition-all"
         >
-          <CheckSquare className="w-5 h-5 text-blue-600" />
+          <Layers className="w-5 h-5 text-blue-600" />
           <div>
-            <span className="text-xs font-bold text-slate-900 block">Connected Hub</span>
-            <span className="text-[11px] text-slate-400 block">View 3-role views</span>
+            <span className="text-xs font-bold text-slate-900 block">Project Workspace</span>
+            <span className="text-[11px] text-slate-400 block">Detailed sections</span>
           </div>
         </button>
 
         <button
-          onClick={() => setActiveTab('budget')}
+          onClick={() => setActiveTab('change-orders')}
           className="p-5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-100 shadow-2xs text-left space-y-2 transition-all"
         >
-          <Wallet className="w-5 h-5 text-emerald-600" />
+          <GitPullRequest className="w-5 h-5 text-amber-600" />
           <div>
-            <span className="text-xs font-bold text-slate-900 block">Budget Ledger</span>
-            <span className="text-[11px] text-slate-400 block">View expenses</span>
+            <span className="text-xs font-bold text-slate-900 block">Change Orders</span>
+            <span className="text-[11px] text-slate-400 block">Review & approve</span>
           </div>
         </button>
 
         <button
-          onClick={() => setActiveTab('materials')}
+          onClick={() => setActiveTab('issues')}
           className="p-5 bg-white hover:bg-slate-50 rounded-2xl border border-slate-100 shadow-2xs text-left space-y-2 transition-all"
         >
-          <ShoppingCart className="w-5 h-5 text-amber-600" />
+          <AlertTriangle className="w-5 h-5 text-rose-600" />
           <div>
-            <span className="text-xs font-bold text-slate-900 block">Materials</span>
-            <span className="text-[11px] text-slate-400 block">Marketplace</span>
+            <span className="text-xs font-bold text-slate-900 block">Defects & Issues</span>
+            <span className="text-[11px] text-slate-400 block">Track resolution</span>
           </div>
         </button>
 
@@ -112,17 +239,23 @@ export const HomeownerDashboard: React.FC = () => {
         >
           <FileText className="w-5 h-5 text-indigo-600" />
           <div>
-            <span className="text-xs font-bold text-slate-900 block">Documents</span>
-            <span className="text-[11px] text-slate-400 block">Vault & files</span>
+            <span className="text-xs font-bold text-slate-900 block">Document Vault</span>
+            <span className="text-[11px] text-slate-400 block">Contracts & plans</span>
           </div>
         </button>
       </div>
 
-      <ProjectOnboardingModal
-        isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-        onProjectCreated={() => {}}
-      />
+      <ChangeOrderApprovalModal isOpen={showChangeModal} onClose={() => setShowChangeModal(false)} />
+      
+      {chatConfig.isOpen && (
+        <ContextualChatModal
+          isOpen={chatConfig.isOpen}
+          onClose={() => setChatConfig({ ...chatConfig, isOpen: false })}
+          entityType={chatConfig.entityType}
+          entityId={chatConfig.entityId}
+          title={chatConfig.title}
+        />
+      )}
     </div>
   );
 };

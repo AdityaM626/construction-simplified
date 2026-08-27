@@ -1,4 +1,4 @@
-export type UserRole = 'HOMEOWNER' | 'BUILDER' | 'DEALER' | 'ADMIN';
+export type UserRole = 'HOMEOWNER' | 'BUILDER' | 'ADMIN' | 'DEALER';
 
 export type ConstructionTeamRole = 
   | 'CONTRACTOR'
@@ -7,13 +7,27 @@ export type ConstructionTeamRole =
   | 'PAINTER'
   | 'ARCHITECT'
   | 'MASON'
-  | 'GENERAL_LABOUR';
+  | 'GENERAL_LABOUR'
+  | 'DEALER';
 
 export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
 
-export type ProjectStatus = 'PLANNING' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD';
+export type ProjectStatus = 
+  | 'LEAD'
+  | 'ESTIMATION'
+  | 'PROPOSAL'
+  | 'AWAITING_OWNER_APPROVAL'
+  | 'APPROVED'
+  | 'PLANNING'
+  | 'IN_PROGRESS'
+  | 'ON_HOLD'
+  | 'COMPLETED'
+  | 'HANDED_OVER'
+  | 'CLOSED';
 
-export type MilestoneStatus = 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'DELAYED';
+export type ProjectHealthStatus = 'HEALTHY' | 'AT_RISK' | 'CRITICAL';
+
+export type MilestoneStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'AWAITING_APPROVAL' | 'COMPLETED' | 'DELAYED' | 'BLOCKED';
 
 export type ProductCategory = 
   | 'CEMENT'
@@ -26,25 +40,13 @@ export type ProductCategory =
   | 'PAINT'
   | 'HARDWARE';
 
-export type OrderStatus = 
-  | 'REQUESTED' 
-  | 'UNDER_REVIEW'
-  | 'ACCEPTED' 
-  | 'INVENTORY_RESERVED'
-  | 'PROCESSING'
-  | 'READY_FOR_DISPATCH'
-  | 'DISPATCHED'
-  | 'IN_TRANSIT'
-  | 'DELIVERED' 
-  | 'PARTIALLY_DELIVERED'
-  | 'REJECTED' 
-  | 'CANCELLED';
-
-export type StockStatus = 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'PRE_ORDER' | 'UNAVAILABLE';
-
-export type DeliveryStatus = 'CREATED' | 'ASSIGNED' | 'PICKUP_PENDING' | 'PICKED_UP' | 'IN_TRANSIT' | 'DELIVERED' | 'FAILED' | 'CANCELLED' | 'RETURNED';
-
-export type BOQStatus = 'PLANNED' | 'QUOTED' | 'ORDERED' | 'PARTIALLY_ORDERED' | 'DELIVERED' | 'COMPLETED';
+export type BudgetVsActualCategory = 
+  | 'MATERIALS'
+  | 'LABOUR'
+  | 'EQUIPMENT'
+  | 'LOGISTICS'
+  | 'DESIGN'
+  | 'OTHER';
 
 export interface User {
   id: string;
@@ -69,15 +71,6 @@ export interface ConstructionTeamMember {
   status: 'ACTIVE' | 'UPCOMING' | 'COMPLETED';
 }
 
-export interface ProjectMember {
-  id: string;
-  projectId: string;
-  userId: string;
-  userName: string;
-  userRole: UserRole | ConstructionTeamRole;
-  joinedAt: string;
-}
-
 export interface BuilderProfile {
   id: string;
   userId: string;
@@ -91,75 +84,200 @@ export interface BuilderProfile {
   specialties: string[];
 }
 
-export interface DealerProfile {
-  id: string;
-  userId: string;
-  businessName: string;
-  gstNumber: string;
-  serviceRadiusKm: number;
-  verificationStatus: VerificationStatus;
-  address: string;
-  rating: number;
-}
-
 export interface Project {
   id: string;
   homeownerId: string;
   homeownerName?: string;
+  homeownerPhone?: string;
   builderId?: string;
   builderName?: string;
   name: string;
   type: 'NEW_CONSTRUCTION' | 'RENOVATION' | 'EXTENSION';
   location: string;
-  plotAreaSqFt: number;
+  builtUpAreaSqFt?: number;
+  plotAreaSqFt?: number;
+  floorsCount?: number;
+  contractValue?: number;
   totalBudget: number;
   spentCost: number;
   committedCost: number;
+  paidAmount?: number;
+  startDate?: string;
   targetCompletionDate: string;
   status: ProjectStatus;
+  projectHealth?: ProjectHealthStatus;
+  healthReason?: string;
+  currentPhase?: string;
+  completionPercentage?: number;
   createdAt: string;
 }
 
-export interface MaterialRequirement {
+export interface Milestone {
   id: string;
   projectId: string;
-  projectName: string;
-  contractorId: string;
-  contractorName: string;
+  title: string;
+  description: string;
+  plannedStartDate: string;
+  plannedEndDate: string;
+  actualEndDate?: string | null;
+  completionPercentage: number;
+  status: MilestoneStatus;
+  allocatedBudget: number;
+  requiresOwnerApproval?: boolean;
+}
+
+export interface BOQItem {
+  id: string;
+  boqId: string;
   category: ProductCategory;
   itemName: string;
-  specification: string;
-  requiredQty: number;
-  orderedQty: number;
-  deliveredQty: number;
-  remainingQty: number;
+  description?: string;
+  specification?: string;
+  quantity?: number;
+  requiredQty?: number;
+  orderedQty?: number;
+  deliveredQty?: number;
   unit: string;
-  estimatedUnitPrice: number;
-  selectedDealerId?: string;
-  selectedDealerName?: string;
-  status: 'PENDING' | 'SUPPLIER_SELECTED' | 'ORDERED' | 'PARTIALLY_DELIVERED' | 'COMPLETED';
+  estimatedRate?: number;
+  estimatedUnitPrice?: number;
+  estimatedTotal: number;
+  actualSpent?: number;
+  variance?: number;
+  matchedProductId?: string;
+  status?: string;
+}
+
+export interface BOQ {
+  id: string;
+  projectId: string;
+  title: string;
+  totalEstimatedValue: number;
+  totalActualValue?: number;
+  orderedValue?: number;
+  deliveredValue?: number;
+  variance?: number;
+  items: BOQItem[];
   createdAt: string;
 }
 
-export interface MaterialTraceabilityItem {
-  requirementId: string;
+export interface BudgetVsActualRecord {
+  category: BudgetVsActualCategory;
+  estimatedAmount: number;
+  actualSpent: number;
+  varianceAmount: number;
+  variancePercentage: number;
+  notes?: string;
+}
+
+export interface DailySiteReport {
+  id: string;
+  projectId: string;
+  date: string;
+  weather?: string;
+  workersPresentCount: number;
+  workCompleted: string;
+  materialsReceived?: string;
+  issuesEncountered?: string;
+  photoUrls: string[];
+  tomorrowsPlan: string;
+  submittedBy: string;
+  createdAt: string;
+}
+
+export interface VendorProcurementRecord {
+  id: string;
+  projectId: string;
+  contractorId: string;
+  vendorName: string;
   category: ProductCategory;
   itemName: string;
-  specification: string;
-  requiredQty: number;
-  orderedQty: number;
-  deliveredQty: number;
-  remainingQty: number;
+  quantity: number;
   unit: string;
-  contractorName: string;
-  supplierName: string;
+  unitRate: number;
+  totalAmount: number;
+  invoiceNumber: string;
+  purchaseDate: string;
+  deliveryDate: string;
+  paymentStatus: 'PAID' | 'PENDING' | 'PARTIAL';
+}
+
+export interface ChangeOrder {
+  id: string;
+  projectId: string;
+  title: string;
+  description?: string;
+  reason?: string;
+  originalScope?: string;
+  proposedChange?: string;
+  costImpact: number;
+  timelineImpactDays: number;
+  requestedBy: string;
+  requestedByRole: UserRole;
+  approvedBy?: string;
+  approvedAt?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'UNDER_REVIEW';
+  createdAt: string;
+}
+
+export interface IssueRecord {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string;
+  category?: string;
+  createdBy: string;
+  createdByRole: UserRole;
+  assignedTo?: string;
+  photoUrl?: string;
+  resolutionNotes?: string;
+  resolvedAt?: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+  createdAt: string;
+}
+
+export type IssueSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type IssueStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+
+export interface PaymentTransaction {
+  id: string;
+  projectId: string;
   orderId?: string;
-  orderStatus?: OrderStatus;
-  orderedDate?: string;
-  deliveredDate?: string;
-  invoiceNumber?: string;
-  paymentStatus?: string;
-  totalValue: number;
+  payerId: string;
+  payerName: string;
+  payeeId: string;
+  payeeName: string;
+  amount: number;
+  paymentMethod: string;
+  currency?: string;
+  transactionReference: string;
+  receiptUrl?: string;
+  status: 'PAID' | 'PENDING' | 'FAILED' | 'SUCCESS';
+  timestamp: string;
+}
+
+export interface DocumentRecord {
+  id: string;
+  projectId: string;
+  title: string;
+  category: 'CONTRACT' | 'BOQ' | 'DRAWING' | 'INVOICE' | 'PERMIT' | 'RECEIPT' | 'WARRANTY' | 'OTHER';
+  fileUrl: string;
+  uploadedBy: string;
+  uploadedByRole: UserRole;
+  sizeBytes: number;
+  uploadedAt: string;
+}
+
+export interface ContextualMessage {
+  id: string;
+  projectId: string;
+  entityType: 'PROJECT' | 'MILESTONE' | 'ISSUE' | 'CHANGE_REQUEST' | 'PAYMENT';
+  entityId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: UserRole;
+  content: string;
+  timestamp: string;
 }
 
 export interface Product {
@@ -179,17 +297,28 @@ export interface Product {
   deliveryEtaDays: number;
   isVerifiedDealer: boolean;
   rating: number;
-  stockStatus?: StockStatus;
+  stockStatus?: string;
 }
 
-export interface OrderItem {
+export interface MaterialRequirement {
   id: string;
-  productId: string;
-  productName: string;
-  unitPrice: number;
-  quantity: number;
-  deliveredQuantity?: number;
-  totalPrice: number;
+  projectId: string;
+  projectName: string;
+  contractorId: string;
+  contractorName: string;
+  category: ProductCategory;
+  itemName: string;
+  specification: string;
+  requiredQty: number;
+  orderedQty: number;
+  deliveredQty: number;
+  remainingQty: number;
+  unit: string;
+  estimatedUnitPrice: number;
+  selectedDealerId?: string;
+  selectedDealerName?: string;
+  status: string;
+  createdAt: string;
 }
 
 export interface OrderRequest {
@@ -204,11 +333,11 @@ export interface OrderRequest {
   dealerName: string;
   materialRequirementId?: string;
   createdByRole: UserRole;
-  items: OrderItem[];
+  items: any[];
   totalAmount: number;
-  status: OrderStatus;
-  createdAt: string;
+  status: string;
   expectedDeliveryDate?: string;
+  createdAt: string;
   notes?: string;
 }
 
@@ -225,109 +354,10 @@ export interface DeliveryJob {
   vehicleNumber?: string;
   pickupAddress: string;
   deliveryAddress: string;
-  status: DeliveryStatus;
+  status: string;
   estimatedEta: string;
-  dispatchedQty?: number;
-  deliveredQty?: number;
-  proofOfDelivery?: {
-    recipientName: string;
-    photoUrl: string;
-    timestamp: string;
-    notes?: string;
-  };
+  proofOfDelivery?: any;
   createdAt: string;
-}
-
-export interface ProjectLedgerEvent {
-  id: string;
-  projectId: string;
-  actorId: string;
-  actorName: string;
-  actorRole: UserRole | ConstructionTeamRole;
-  eventType: 
-    | 'PROJECT_CREATED'
-    | 'CONTRACTOR_ASSIGNED'
-    | 'TEAM_MEMBER_ADDED'
-    | 'BOQ_CREATED'
-    | 'MATERIAL_REQUESTED'
-    | 'SUPPLIER_SELECTED'
-    | 'ORDER_CREATED'
-    | 'ORDER_ACCEPTED'
-    | 'INVENTORY_RESERVED'
-    | 'ORDER_DISPATCHED'
-    | 'PARTIAL_DELIVERY'
-    | 'DELIVERY_COMPLETED'
-    | 'INVOICE_UPLOADED'
-    | 'PAYMENT_RECORDED'
-    | 'MILESTONE_UPDATED'
-    | 'SITE_UPDATE_ADDED';
-  title: string;
-  description: string;
-  entityId?: string;
-  metadata?: any;
-  timestamp: string;
-}
-
-export interface Milestone {
-  id: string;
-  projectId: string;
-  title: string;
-  description: string;
-  plannedStartDate: string;
-  plannedEndDate: string;
-  actualEndDate?: string | null;
-  completionPercentage: number;
-  status: MilestoneStatus;
-  allocatedBudget: number;
-}
-
-export interface SiteUpdate {
-  id: string;
-  milestoneId: string;
-  projectId: string;
-  builderId: string;
-  builderName: string;
-  notes: string;
-  completionPercentage: number;
-  photoUrl: string;
-  timestamp: string;
-}
-
-export interface BOQItem {
-  id: string;
-  boqId: string;
-  category: ProductCategory;
-  itemName: string;
-  specification: string;
-  requiredQty: number;
-  orderedQty: number;
-  deliveredQty: number;
-  unit: string;
-  estimatedUnitPrice: number;
-  estimatedTotal: number;
-  matchedProductId?: string;
-  status: BOQStatus;
-}
-
-export interface BOQ {
-  id: string;
-  projectId: string;
-  title: string;
-  totalEstimatedValue: number;
-  orderedValue: number;
-  deliveredValue: number;
-  items: BOQItem[];
-  createdAt: string;
-}
-
-export interface NotificationItem {
-  id: string;
-  userId: string;
-  title: string;
-  message: string;
-  type: 'ORDER' | 'MILESTONE' | 'QUOTE' | 'SYSTEM' | 'VERIFICATION' | 'DELIVERY' | 'ISSUE' | 'CHANGE_ORDER';
-  read: boolean;
-  timestamp: string;
 }
 
 export interface AuditEvent {
@@ -339,5 +369,19 @@ export interface AuditEvent {
   entity: string;
   entityId: string;
   metadata?: string;
+  timestamp: string;
+}
+
+export interface ProjectLedgerEvent {
+  id: string;
+  projectId: string;
+  actorId: string;
+  actorName: string;
+  actorRole: UserRole | ConstructionTeamRole;
+  eventType: any;
+  title: string;
+  description: string;
+  entityId?: string;
+  metadata?: any;
   timestamp: string;
 }
