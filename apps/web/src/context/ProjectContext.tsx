@@ -1,10 +1,13 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Project } from '../types';
+import { api } from '../api/client';
+import { useAuth } from './AuthContext';
 
 interface ProjectContextType {
   activeProjectId: string;
   setActiveProjectId: (id: string) => void;
   projects: Project[];
+  refreshProjects: () => Promise<void>;
 }
 
 const defaultProjects: Project[] = [
@@ -63,10 +66,26 @@ const defaultProjects: Project[] = [
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { currentUser } = useAuth();
   const [activeProjectId, setActiveProjectId] = useState<string>('prj-101');
+  const [projects, setProjects] = useState<Project[]>(defaultProjects);
+
+  const refreshProjects = async () => {
+    try {
+      const sharedProjects = await api.getProjects() as Project[];
+      setProjects(sharedProjects);
+      if (sharedProjects.length && !sharedProjects.some(project => project.id === activeProjectId)) {
+        setActiveProjectId(sharedProjects[0].id);
+      }
+    } catch {
+      // The API may not be running during UI-only development; retain seed data.
+    }
+  };
+
+  useEffect(() => { void refreshProjects(); }, [currentUser.id]);
 
   return (
-    <ProjectContext.Provider value={{ activeProjectId, setActiveProjectId, projects: defaultProjects }}>
+    <ProjectContext.Provider value={{ activeProjectId, setActiveProjectId, projects, refreshProjects }}>
       {children}
     </ProjectContext.Provider>
   );
