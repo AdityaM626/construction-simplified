@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { DailySiteReportModal } from './DailySiteReportModal';
 import { Badge } from '../common/Badge';
+import { useProject } from '../../context/ProjectContext';
 import {
   Building2,
   CheckSquare,
@@ -19,23 +20,17 @@ import {
 
 export const BuilderDashboard: React.FC = () => {
   const { setActiveTab } = useAuth();
+  const { projects } = useProject();
   const [showDailyReportModal, setShowDailyReportModal] = useState(false);
 
-  const activeProjects = [
-    {
-      id: 'prj-101',
-      name: 'Sharma Residence / Kumar Villa (4BHK)',
-      owner: 'Rajesh Kumar',
-      location: 'Whitefield, Bengaluru',
-      progress: 46,
-      contractValue: 4500000,
-      spentCost: 1820000,
-      projectHealth: 'HEALTHY' as const,
-      healthReason: 'Execution on schedule with minor 2.1% material rate variance',
-      activeMilestone: 'Ground & First Floor Superstructure',
-      status: 'IN_PROGRESS'
-    }
-  ];
+  const activeProjects = projects.map(project => ({
+    ...project,
+    owner: project.homeownerName || 'Homeowner',
+    progress: project.completionPercentage || 0,
+    contractValue: project.contractValue || project.totalBudget,
+    projectHealth: project.projectHealth || 'HEALTHY',
+    activeMilestone: project.currentPhase || 'Planning'
+  }));
 
   const todaysTasks = [
     { id: 'tsk-1', title: 'Verify 1st floor column shuttering alignment', trade: 'Masonry', priority: 'HIGH', status: 'IN_PROGRESS' },
@@ -66,7 +61,7 @@ export const BuilderDashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-2xs space-y-1">
           <span className="text-xs font-semibold text-slate-400 block">Active Projects</span>
-          <p className="text-2xl font-bold text-slate-900 font-tabular">1</p>
+          <p className="text-2xl font-bold text-slate-900 font-tabular">{activeProjects.length}</p>
           <span className="text-[11px] text-emerald-600 font-medium block">100% on schedule</span>
         </div>
 
