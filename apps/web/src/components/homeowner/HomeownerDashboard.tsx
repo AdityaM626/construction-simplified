@@ -4,6 +4,7 @@ import { ChangeOrderApprovalModal } from './ChangeOrderApprovalModal';
 import { ProjectSnapshotModal } from '../common/ProjectSnapshotModal';
 import { ContextualChatModal } from '../common/ContextualChatModal';
 import { Badge } from '../common/Badge';
+import { useProject } from '../../context/ProjectContext';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -22,6 +23,7 @@ import {
 
 export const HomeownerDashboard: React.FC = () => {
   const { setActiveTab } = useAuth();
+  const { activeProjectId, projects } = useProject();
   const [showChangeModal, setShowChangeModal] = useState(false);
   const [showSnapshotModal, setShowSnapshotModal] = useState(false);
   const [chatConfig, setChatConfig] = useState<{ isOpen: boolean; entityType: any; entityId: string; title: string }>({
@@ -31,23 +33,12 @@ export const HomeownerDashboard: React.FC = () => {
     title: 'Project Discussion'
   });
 
-  const project = {
-    id: 'prj-101',
-    name: 'Sharma Residence / Kumar Villa (4BHK)',
-    location: 'Plot #42, Palm Meadows Enclave, Whitefield, Bengaluru',
-    builderName: 'Apex Infrastructure & Builders',
-    contractValue: 4500000,
-    spentCost: 1820000,
-    committedCost: 850000,
-    paidAmount: 1820000,
-    completionPercentage: 46,
-    currentPhase: 'Ground & First Floor Superstructure',
-    targetCompletionDate: '2027-03-31',
-    projectHealth: 'HEALTHY' as const,
-    healthReason: 'Project execution on schedule with minor 2.1% material rate variance'
-  };
+  const project = projects.find(item => item.id === activeProjectId) || projects[0];
+  if (!project) return <p className="text-sm text-slate-500">No project is assigned to this account yet.</p>;
 
-  const remainingContractValue = project.contractValue - project.paidAmount;
+  const contractValue = project.contractValue || project.totalBudget;
+  const paidAmount = project.paidAmount || 0;
+  const remainingContractValue = contractValue - paidAmount;
 
   const constructionPhases = [
     { num: 1, name: 'Planning', status: 'COMPLETED' },
@@ -155,7 +146,7 @@ export const HomeownerDashboard: React.FC = () => {
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-2xs space-y-1">
           <span className="text-xs font-semibold text-slate-400">Total Contract Value</span>
           <p className="text-2xl font-bold text-slate-900 font-tabular">
-            ₹{(project.contractValue / 100000).toFixed(1)}L
+            ₹{(contractValue / 100000).toFixed(1)}L
           </p>
           <span className="text-[11px] text-slate-400 block">Baseline agreed budget</span>
         </div>
@@ -163,10 +154,10 @@ export const HomeownerDashboard: React.FC = () => {
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-2xs space-y-1">
           <span className="text-xs font-semibold text-slate-400">Amount Paid to Date</span>
           <p className="text-2xl font-bold text-emerald-700 font-tabular">
-            ₹{(project.paidAmount / 100000).toFixed(1)}L
+            ₹{(paidAmount / 100000).toFixed(1)}L
           </p>
           <span className="text-[11px] text-emerald-600 font-semibold block">
-            {((project.paidAmount / project.contractValue) * 100).toFixed(0)}% paid to contractor
+            {((paidAmount / contractValue) * 100).toFixed(0)}% paid to contractor
           </span>
         </div>
 
