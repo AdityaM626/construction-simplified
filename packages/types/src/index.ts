@@ -112,6 +112,18 @@ export interface Project {
   createdAt: string;
 }
 
+export interface SiteUpdate {
+  id: string;
+  milestoneId: string;
+  projectId: string;
+  builderId: string;
+  builderName: string;
+  notes: string;
+  completionPercentage: number;
+  photoUrl: string;
+  timestamp: string;
+}
+
 export interface MultiDimensionHealth {
   overall: ProjectHealthStatus;
   explanation: string;

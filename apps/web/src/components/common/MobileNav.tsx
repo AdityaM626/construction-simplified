@@ -3,13 +3,12 @@ import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard,
   Wallet,
-  ShoppingBag,
   Building2,
-  Package,
-  ListOrdered,
   ShieldAlert,
   Layers,
-  Users
+  Users,
+  AlertTriangle,
+  Camera
 } from 'lucide-react';
 
 export const MobileNav: React.FC = () => {
@@ -17,21 +16,17 @@ export const MobileNav: React.FC = () => {
 
   const homeownerItems = [
     { id: 'dashboard', label: 'Home', icon: <LayoutDashboard className="w-5 h-5" /> },
-    { id: 'connected-project', label: 'Connected Hub', icon: <Layers className="w-5 h-5" /> },
-    { id: 'budget', label: 'Budget', icon: <Wallet className="w-5 h-5" /> },
-    { id: 'materials', label: 'Materials', icon: <ShoppingBag className="w-5 h-5" /> },
+    { id: 'action-center', label: 'Actions', icon: <AlertTriangle className="w-5 h-5" /> },
+    { id: 'connected-project', label: 'Workspace', icon: <Layers className="w-5 h-5" /> },
+    { id: 'financials', label: 'Financials', icon: <Wallet className="w-5 h-5" /> },
+    { id: 'journal', label: 'Site Diary', icon: <Camera className="w-5 h-5" /> },
   ];
 
   const builderItems = [
     { id: 'projects', label: 'Projects', icon: <Building2 className="w-5 h-5" /> },
-    { id: 'connected-project', label: 'Hub', icon: <Layers className="w-5 h-5" /> },
+    { id: 'action-center', label: 'Actions', icon: <AlertTriangle className="w-5 h-5" /> },
+    { id: 'connected-project', label: 'Project Hub', icon: <Layers className="w-5 h-5" /> },
     { id: 'team-roster', label: 'Team', icon: <Users className="w-5 h-5" /> },
-  ];
-
-  const dealerItems = [
-    { id: 'inventory', label: 'Inventory', icon: <Package className="w-5 h-5" /> },
-    { id: 'orders', label: 'Orders', icon: <ListOrdered className="w-5 h-5" /> },
-    { id: 'connected-project', label: 'Hub', icon: <Layers className="w-5 h-5" /> },
   ];
 
   const adminItems = [
@@ -40,7 +35,6 @@ export const MobileNav: React.FC = () => {
 
   let items = homeownerItems;
   if (currentUser.role === 'BUILDER') items = builderItems;
-  if (currentUser.role === 'DEALER') items = dealerItems;
   if (currentUser.role === 'ADMIN') items = adminItems;
 
   return (

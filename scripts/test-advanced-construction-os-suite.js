@@ -1,4 +1,11 @@
-import seedData from '../packages/db/src/seedData.json' assert { type: 'json' };
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const seedDataPath = path.join(__dirname, '../packages/db/src/seedData.json');
+const seedData = JSON.parse(fs.readFileSync(seedDataPath, 'utf8'));
 
 console.log('====================================================================================');
 console.log('CONSTRUCTION OS — ADVANCED LIFECYCLE & PRODUCT MASTER ACCEPTANCE SUITE');

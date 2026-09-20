@@ -1,65 +1,55 @@
 import React, { useState } from 'react';
+import { useProject } from '../../context/ProjectContext';
 import { Building2, ChevronDown, Check } from 'lucide-react';
 
-interface ProjectOption {
-  id: string;
-  name: string;
-  location: string;
-  status: string;
-}
-
 export const ProjectSwitcher: React.FC = () => {
+  const { activeProjectId, setActiveProjectId, projects } = useProject();
   const [isOpen, setIsOpen] = useState(false);
-  const [projects] = useState<ProjectOption[]>([
-    { id: 'prj-101', name: 'Sharma Residence / Kumar Villa (4BHK)', location: 'Whitefield, Bengaluru', status: 'IN_PROGRESS' },
-    { id: 'prj-102', name: 'Green Villa Renovation', location: 'Indiranagar, Bengaluru', status: 'PLANNING' },
-    { id: 'prj-103', name: 'Patel Structural Extension', location: 'HSR Layout, Bengaluru', status: 'IN_PROGRESS' }
-  ]);
 
-  const [selectedProject, setSelectedProject] = useState<ProjectOption>(projects[0]);
+  const currentProject = projects.find(p => p.id === activeProjectId) || projects[0];
 
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-xl border border-slate-700 text-xs font-semibold transition-colors"
+        className="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 rounded-xl transition-all border border-slate-200/60 text-left"
+        aria-label="Switch active construction project"
       >
-        <Building2 className="w-4 h-4 text-blue-400 shrink-0" />
-        <div className="text-left max-w-[140px] sm:max-w-[200px] truncate">
-          <span className="text-[10px] text-slate-400 block font-normal leading-none">Active Project</span>
-          <span className="truncate block font-bold text-slate-100">{selectedProject.name}</span>
+        <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
+        <div className="truncate max-w-[140px] sm:max-w-[200px]">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block leading-none">Active Project</span>
+          <span className="text-xs font-bold text-slate-900 truncate block leading-tight mt-0.5">{currentProject.name}</span>
         </div>
         <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 mt-2 w-72 bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 py-2 z-50 animate-in fade-in duration-150">
-          <div className="px-4 py-2 border-b border-slate-100">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Select Connected Project</span>
+        <div className="absolute left-0 mt-2 w-72 bg-white rounded-2xl border border-slate-200 shadow-xl p-2 z-50 space-y-1">
+          <div className="px-3 py-1.5 border-b border-slate-100">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Project</span>
           </div>
-          <div className="divide-y divide-slate-100">
-            {projects.map((p) => {
-              const isSelected = p.id === selectedProject.id;
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => {
-                    setSelectedProject(p);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 hover:bg-slate-50 flex items-start justify-between transition-colors ${
-                    isSelected ? 'bg-blue-50/50' : ''
-                  }`}
-                >
-                  <div>
-                    <span className="font-bold text-xs text-slate-900 block">{p.name}</span>
-                    <span className="text-[11px] text-slate-500 block">{p.location}</span>
-                  </div>
-                  {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />}
-                </button>
-              );
-            })}
-          </div>
+
+          {projects.map((prj) => {
+            const isSelected = prj.id === activeProjectId;
+            return (
+              <button
+                key={prj.id}
+                onClick={() => {
+                  setActiveProjectId(prj.id);
+                  setIsOpen(false);
+                }}
+                className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs transition-colors ${
+                  isSelected ? 'bg-blue-50 text-blue-700 font-bold' : 'hover:bg-slate-50 text-slate-700'
+                }`}
+              >
+                <div className="text-left truncate pr-2">
+                  <p className="font-bold truncate">{prj.name}</p>
+                  <p className="text-[10px] text-slate-400 truncate">{prj.location}</p>
+                </div>
+                {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0" />}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

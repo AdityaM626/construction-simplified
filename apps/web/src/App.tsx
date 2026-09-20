@@ -1,5 +1,6 @@
 import React from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ProjectProvider } from './context/ProjectContext';
 import { Header } from './components/common/Header';
 import { Sidebar } from './components/common/Sidebar';
 import { MobileNav } from './components/common/MobileNav';
@@ -87,7 +88,7 @@ const MainContent: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col ${isMobileViewport ? 'max-w-md mx-auto my-6 rounded-3xl border-8 border-slate-900 shadow-2xl overflow-hidden bg-slate-50' : 'bg-slate-50'}`}>
+    <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
       <div className="flex flex-1">
         {!isMobileViewport && <Sidebar />}
@@ -103,7 +104,9 @@ const MainContent: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <AuthProvider>
-      <MainContent />
+      <ProjectProvider>
+        <MainContent />
+      </ProjectProvider>
     </AuthProvider>
   );
 };
