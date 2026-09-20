@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { GitPullRequest, CheckCircle2, XCircle, ArrowRight, DollarSign, Clock, AlertTriangle } from 'lucide-react';
+import { api } from '../../api/client';
+import { useProject } from '../../context/ProjectContext';
 
 interface ChangeOrderApprovalModalProps {
   isOpen: boolean;
@@ -9,6 +11,10 @@ interface ChangeOrderApprovalModalProps {
 
 export const ChangeOrderApprovalModal: React.FC<ChangeOrderApprovalModalProps> = ({ isOpen, onClose }) => {
   const [approved, setApproved] = useState(false);
+  const [rejected, setRejected] = useState(false);
+  const [error, setError] = useState('');
+  const [approving, setApproving] = useState(false);
+  const { activeProjectId, refreshProjects } = useProject();
 
   const changeReq = {
     id: 'cho-101',
@@ -22,11 +28,34 @@ export const ChangeOrderApprovalModal: React.FC<ChangeOrderApprovalModalProps> =
     status: approved ? 'APPROVED' : 'PENDING'
   };
 
-  const handleApprove = () => {
-    setApproved(true);
-    setTimeout(() => {
-      onClose();
-    }, 1500);
+  const handleApprove = async () => {
+    setError('');
+    setApproving(true);
+    try {
+      await api.approveChangeRequest(activeProjectId, changeReq.id);
+      await refreshProjects();
+      setApproved(true);
+      setTimeout(onClose, 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not approve this change order.');
+    } finally {
+      setApproving(false);
+    }
+  };
+
+  const handleReject = async () => {
+    setError('');
+    setApproving(true);
+    try {
+      await api.rejectChangeRequest(activeProjectId, changeReq.id);
+      await refreshProjects();
+      setRejected(true);
+      setTimeout(onClose, 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not reject this change order.');
+    } finally {
+      setApproving(false);
+    }
   };
 
   return (
@@ -69,23 +98,31 @@ export const ChangeOrderApprovalModal: React.FC<ChangeOrderApprovalModalProps> =
             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             <span>Change order approved! Project contract value updated by +₹1,20,000.</span>
           </div>
+        ) : rejected ? (
+          <div className="p-4 bg-slate-100 text-slate-700 rounded-2xl text-xs font-bold flex items-center space-x-2">
+            <XCircle className="w-5 h-5 text-slate-500 shrink-0" />
+            <span>Change order rejected. The contractor will see this decision in the shared project record.</span>
+          </div>
         ) : (
           <div className="flex justify-end space-x-3 pt-2">
             <button
-              onClick={onClose}
+              onClick={handleReject}
+              disabled={approving}
               className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
             >
-              Reject Change
+              {approving ? 'Saving…' : 'Reject Change'}
             </button>
             <button
               onClick={handleApprove}
+              disabled={approving}
               className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md flex items-center space-x-2"
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>Approve Change Order</span>
+              <span>{approving ? 'Approving…' : 'Approve Change Order'}</span>
             </button>
           </div>
         )}
+        {error && <p className="text-xs font-semibold text-red-600">{error}</p>}
       </div>
     </Modal>
   );
