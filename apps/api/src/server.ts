@@ -149,6 +149,20 @@ app.get('/api/auth/me', authenticateToken, (req: AuthenticatedRequest, res: Resp
 // OWNER OS ↔ CONTRACTOR OS REST API ENDPOINTS
 // ============================================================================
 
+// Shared project inbox.  Both the homeowner and the assigned contractor see the
+// same project record; this is the single source of truth for the two portals.
+app.get('/api/projects', authenticateToken, (req: AuthenticatedRequest, res: Response) => {
+  const user = req.user!;
+  const projects = user.role === 'ADMIN'
+    ? db.projects
+    : db.projects.filter(project => project.homeownerId === user.id || project.builderId === user.id);
+  return res.json(projects);
+});
+
+app.get('/api/projects/:id', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  return res.json(req.project);
+});
+
 // 1. Calculate Project Health
 app.get('/api/projects/:id/health', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
   const project = req.project;
@@ -244,8 +258,13 @@ app.get('/api/projects/:id/budget-vs-actual', authenticateToken, authorizeProjec
     projectName: project.name,
     totalBudget: project.totalBudget,
     totalSpent: project.spentCost,
+    // Budget records in the current schema are a single-project seed collection.
     categories: db.budgetVsActualRecords
   });
+});
+
+app.get('/api/projects/:id/change-requests', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  return res.json(db.changeOrders.filter(changeOrder => changeOrder.projectId === req.project.id));
 });
 
 // 4. Daily Site Reporting
@@ -312,19 +331,51 @@ app.post('/api/projects/:id/change-requests/:reqId/approve', authenticateToken, 
   return res.json({ project, changeReq });
 });
 
+app.post('/api/projects/:id/change-requests/:reqId/reject', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  if (req.user!.role !== 'HOMEOWNER' && req.user!.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Only the homeowner can reject change orders' });
+  }
+
+  const project = req.project;
+  const changeReq = db.changeOrders.find(c => c.id === req.params.reqId && c.projectId === project.id);
+  if (!changeReq) return res.status(404).json({ error: 'Change request not found for this project' });
+  if (changeReq.status !== 'PENDING') {
+    return res.status(400).json({ error: `Change request has already been ${changeReq.status.toLowerCase()}` });
+  }
+
+  changeReq.status = 'REJECTED';
+  changeReq.approvedBy = req.user!.fullName;
+  changeReq.approvedAt = new Date().toISOString();
+  db.logLedger(project.id, req.user!.id, req.user!.fullName, req.user!.role, 'CHANGE_REQUEST_REJECTED', 'Change Request Rejected', `Rejected change: ${changeReq.title}`, changeReq.id);
+  return res.json({ project, changeReq });
+});
+
 // 6. Contextual Messaging
-app.get('/api/messages/:entityType/:entityId', authenticateToken, (req: Request, res: Response) => {
+app.get('/api/messages/:entityType/:entityId', authenticateToken, (req: AuthenticatedRequest, res: Response) => {
   const msgs = db.contextualMessages.filter(m => m.entityType === req.params.entityType && m.entityId === req.params.entityId);
+  const projectId = msgs[0]?.projectId || (req.params.entityType === 'PROJECT' ? req.params.entityId : undefined);
+  const project = projectId && db.projects.find(p => p.id === projectId);
+  if (!project) return res.status(404).json({ error: 'Project context not found' });
+  const user = req.user!;
+  if (user.role !== 'ADMIN' && project.homeownerId !== user.id && project.builderId !== user.id) {
+    return res.status(403).json({ error: 'Access denied for this conversation' });
+  }
   return res.json(msgs);
 });
 
 app.post('/api/messages', authenticateToken, (req: AuthenticatedRequest, res: Response) => {
   const { projectId, entityType, entityId, content } = req.body;
+  const project = db.projects.find(p => p.id === projectId);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+  if (req.user!.role !== 'ADMIN' && project.homeownerId !== req.user!.id && project.builderId !== req.user!.id) {
+    return res.status(403).json({ error: 'Access denied for this project' });
+  }
+  if (!content?.trim()) return res.status(400).json({ error: 'Message content is required' });
   const newMsg = {
     id: `msg-${Date.now()}`,
-    projectId: projectId || 'prj-101',
+    projectId,
     entityType: entityType || 'PROJECT',
-    entityId: entityId || 'prj-101',
+    entityId: entityId || projectId,
     senderId: req.user!.id,
     senderName: req.user!.fullName,
     senderRole: req.user!.role,
