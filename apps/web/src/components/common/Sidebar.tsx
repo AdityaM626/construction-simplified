@@ -61,13 +61,14 @@ export const Sidebar: React.FC = () => {
   let items = homeownerItems;
   if (currentUser.role === 'BUILDER') items = builderItems;
   if (currentUser.role === 'ADMIN') items = adminItems;
+  const isBuilder = currentUser.role === 'BUILDER';
 
   return (
-    <aside className="w-64 bg-slate-50/50 border-r border-slate-200/60 min-h-[calc(100vh-4rem)] p-6 hidden md:block">
-      <div className="mb-6 px-4 py-3 bg-white rounded-2xl border border-slate-100 shadow-2xs">
+    <aside className={`w-64 border-r min-h-[calc(100vh-4rem)] p-6 hidden md:block ${isBuilder ? 'bg-amber-50/60 border-amber-100' : 'bg-blue-50/40 border-blue-100'}`}>
+      <div className={`mb-6 px-4 py-3 bg-white rounded-2xl border shadow-sm ${isBuilder ? 'border-amber-200' : 'border-blue-100'}`}>
         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Active Workspace</span>
         <p className="text-xs font-bold text-slate-900 truncate mt-0.5">{currentUser.fullName}</p>
-        <span className="text-[11px] text-blue-600 font-semibold">
+        <span className={`text-[11px] font-semibold ${isBuilder ? 'text-amber-700' : 'text-blue-700'}`}>
           {currentUser.role === 'BUILDER' ? 'Contractor Partner' : currentUser.role === 'HOMEOWNER' ? 'House Owner' : 'Platform Admin'}
         </span>
       </div>
@@ -81,11 +82,11 @@ export const Sidebar: React.FC = () => {
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-semibold transition-all ${
                 isActive
-                  ? 'bg-white text-blue-700 shadow-2xs border border-slate-100 font-bold'
+                  ? isBuilder ? 'bg-amber-500 text-white shadow-sm border border-amber-500 font-bold' : 'bg-blue-600 text-white shadow-sm border border-blue-600 font-bold'
                   : 'text-slate-500 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
-              <span className={isActive ? 'text-blue-600' : 'text-slate-400'}>{item.icon}</span>
+              <span className={isActive ? 'text-white' : isBuilder ? 'text-amber-600' : 'text-blue-500'}>{item.icon}</span>
               <span>{item.label}</span>
             </button>
           );
