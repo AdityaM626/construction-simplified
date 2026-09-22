@@ -7,7 +7,8 @@ import { UserRole, ProjectHealthStatus } from '@construction-os/types';
 const JWT_SECRET = process.env.JWT_SECRET || 'construction-os-jwt-secret-2026';
 
 const app = express();
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(origin => origin.trim());
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 
 export interface AuthenticatedRequest extends Request {
@@ -265,6 +266,76 @@ app.get('/api/projects/:id/budget-vs-actual', authenticateToken, authorizeProjec
 
 app.get('/api/projects/:id/change-requests', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
   return res.json(db.changeOrders.filter(changeOrder => changeOrder.projectId === req.project.id));
+});
+
+app.post('/api/projects/:id/change-requests', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  if (req.user!.role !== 'BUILDER' && req.user!.role !== 'HOMEOWNER' && req.user!.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Only project participants can submit change orders' });
+  }
+  const { title, description, reason, originalScope, proposedChange, costImpact, timelineImpactDays } = req.body;
+  if (!title?.trim() || !proposedChange?.trim() || !Number.isFinite(Number(costImpact)) || Number(costImpact) < 0 || !Number.isFinite(Number(timelineImpactDays)) || Number(timelineImpactDays) < 0) {
+    return res.status(400).json({ error: 'Title, proposed scope, and non-negative cost and timeline impacts are required' });
+  }
+
+  const changeOrder = {
+    id: `cho-${Date.now()}`,
+    projectId: req.project.id,
+    title: title.trim(),
+    description: description?.trim() || '',
+    reason: reason?.trim() || '',
+    originalScope: originalScope?.trim() || '',
+    proposedChange: proposedChange.trim(),
+    costImpact: Number(costImpact),
+    timelineImpactDays: Number(timelineImpactDays),
+    requestedBy: req.user!.fullName,
+    requestedByRole: req.user!.role,
+    status: 'PENDING' as const,
+    createdAt: new Date().toISOString()
+  };
+  db.changeOrders.unshift(changeOrder);
+  db.logLedger(req.project.id, req.user!.id, req.user!.fullName, req.user!.role, 'CHANGE_REQUEST_CREATED', 'Change Request Submitted', `Submitted change: ${changeOrder.title}`, changeOrder.id);
+  return res.status(201).json(changeOrder);
+});
+
+app.get('/api/projects/:id/issues', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  return res.json(db.issues.filter(issue => issue.projectId === req.project.id));
+});
+
+app.post('/api/projects/:id/issues', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  const { title, description, category, severity, photoUrl } = req.body;
+  if (!title?.trim() || !description?.trim() || !['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(severity)) {
+    return res.status(400).json({ error: 'Title, description, and a valid severity are required' });
+  }
+  const issue = {
+    id: `iss-${Date.now()}`,
+    projectId: req.project.id,
+    title: title.trim(),
+    description: description.trim(),
+    category: category?.trim() || 'GENERAL',
+    severity,
+    status: 'OPEN' as const,
+    createdBy: req.user!.fullName,
+    createdByRole: req.user!.role,
+    assignedTo: req.project.builderName,
+    photoUrl: photoUrl?.trim() || undefined,
+    createdAt: new Date().toISOString()
+  };
+  db.issues.unshift(issue);
+  db.logLedger(req.project.id, req.user!.id, req.user!.fullName, req.user!.role, 'ISSUE_CREATED', 'Quality Issue Reported', issue.title, issue.id);
+  return res.status(201).json(issue);
+});
+
+app.patch('/api/projects/:id/issues/:issueId', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  if (req.user!.role !== 'BUILDER' && req.user!.role !== 'ADMIN') return res.status(403).json({ error: 'Only the contractor can update issue status' });
+  const issue = db.issues.find(item => item.id === req.params.issueId && item.projectId === req.project.id);
+  if (!issue) return res.status(404).json({ error: 'Issue not found for this project' });
+  const { status, resolutionNotes } = req.body;
+  if (!['IN_PROGRESS', 'RESOLVED'].includes(status)) return res.status(400).json({ error: 'Issue status must be IN_PROGRESS or RESOLVED' });
+  issue.status = status;
+  if (resolutionNotes?.trim()) issue.resolutionNotes = resolutionNotes.trim();
+  if (status === 'RESOLVED') issue.resolvedAt = new Date().toISOString();
+  db.logLedger(req.project.id, req.user!.id, req.user!.fullName, req.user!.role, 'ISSUE_UPDATED', `Issue ${status.toLowerCase()}`, issue.title, issue.id);
+  return res.json(issue);
 });
 
 // 4. Daily Site Reporting
