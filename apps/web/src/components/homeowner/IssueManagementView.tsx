@@ -1,28 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IssueRecord, IssueSeverity, IssueStatus } from '../../types';
 import { Modal } from '../common/Modal';
 import { Badge } from '../common/Badge';
+import { api } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
+import { useProject } from '../../context/ProjectContext';
 import { AlertTriangle, Plus, CheckCircle2, Camera, ShieldAlert } from 'lucide-react';
 
 export const IssueManagementView: React.FC = () => {
-  const [issues, setIssues] = useState<IssueRecord[]>([
-    {
-      id: 'iss-1',
-      projectId: 'prj-101',
-      title: 'Minor hairline shrinkage crack on east parapet wall',
-      description: 'Observed 2mm surface hairline crack during plaster inspection.',
-      category: 'STRUCTURAL',
-      severity: 'LOW',
-      status: 'RESOLVED',
-      createdBy: 'Rajesh Kumar',
-      createdByRole: 'HOMEOWNER',
-      assignedTo: 'Vikram Singh',
-      photoUrl: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=800&q=80',
-      resolutionNotes: 'Polymer modified mortar seal applied. Inspected and approved.',
-      createdAt: '2026-07-10T09:00:00.000Z',
-      resolvedAt: '2026-07-12T15:00:00.000Z'
-    }
-  ]);
+  const { currentUser } = useAuth();
+  const { activeProjectId } = useProject();
+  const [issues, setIssues] = useState<IssueRecord[]>([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -30,26 +20,40 @@ export const IssueManagementView: React.FC = () => {
   const [category, setCategory] = useState<'STRUCTURAL' | 'ELECTRICAL' | 'PLUMBING' | 'FINISHING' | 'MATERIAL_DEFECT'>('STRUCTURAL');
   const [severity, setSeverity] = useState<IssueSeverity>('MEDIUM');
 
-  const handleCreateIssue = (e: React.FormEvent) => {
+  const loadIssues = async () => {
+    setLoading(true);
+    try {
+      setIssues(await api.getIssues(activeProjectId));
+      setError('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load project issues.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void loadIssues(); }, [activeProjectId]);
+
+  const handleCreateIssue = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newIssue: IssueRecord = {
-      id: `iss-${Date.now()}`,
-      projectId: 'prj-101',
-      title,
-      description,
-      category,
-      severity,
-      status: 'OPEN',
-      createdBy: 'Rajesh Kumar',
-      createdByRole: 'HOMEOWNER',
-      assignedTo: 'Vikram Singh (Apex Infra)',
-      photoUrl: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=800&q=80',
-      createdAt: new Date().toISOString()
-    };
-    setIssues([newIssue, ...issues]);
-    setIsModalOpen(false);
-    setTitle('');
-    setDescription('');
+    try {
+      await api.createIssue(activeProjectId, { title, description, category, severity });
+      setIsModalOpen(false);
+      setTitle('');
+      setDescription('');
+      await loadIssues();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not report this issue.');
+    }
+  };
+
+  const updateIssue = async (issue: IssueRecord, status: 'IN_PROGRESS' | 'RESOLVED') => {
+    try {
+      await api.updateIssue(activeProjectId, issue.id, { status, resolutionNotes: status === 'RESOLVED' ? 'Contractor marked this issue as resolved.' : undefined });
+      await loadIssues();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update this issue.');
+    }
   };
 
   return (
@@ -68,7 +72,9 @@ export const IssueManagementView: React.FC = () => {
         </button>
       </div>
 
-      <div className="space-y-4">
+      {error && <p className="text-xs font-semibold text-rose-700 bg-rose-50 p-3 rounded-xl">{error}</p>}
+
+      {loading ? <p className="text-sm text-slate-500">Loading issues…</p> : <div className="space-y-4">
         {issues.map((iss) => (
           <div key={iss.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
@@ -89,7 +95,7 @@ export const IssueManagementView: React.FC = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <img src={iss.photoUrl} alt="Defect Photo" className="w-full sm:w-40 h-28 object-cover rounded-xl border border-slate-200" />
+              {iss.photoUrl && <img src={iss.photoUrl} alt="Defect Photo" className="w-full sm:w-40 h-28 object-cover rounded-xl border border-slate-200" />}
               <div className="space-y-2 text-xs">
                 <p className="text-slate-700 leading-relaxed">{iss.description}</p>
                 {iss.resolutionNotes && (
@@ -99,11 +105,12 @@ export const IssueManagementView: React.FC = () => {
                   </div>
                 )}
                 <span className="text-[11px] text-slate-400 block">Reported on {new Date(iss.createdAt).toLocaleDateString()}</span>
+                {currentUser.role === 'BUILDER' && (iss.status === 'OPEN' || iss.status === 'IN_PROGRESS') && <div className="flex gap-2 pt-2"><button onClick={() => updateIssue(iss, 'IN_PROGRESS')} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg font-bold">Start work</button><button onClick={() => updateIssue(iss, 'RESOLVED')} className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg font-bold">Mark resolved</button></div>}
               </div>
             </div>
           </div>
         ))}
-      </div>
+      </div>}
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Report Site Defect or Quality Issue">
         <form onSubmit={handleCreateIssue} className="space-y-4">

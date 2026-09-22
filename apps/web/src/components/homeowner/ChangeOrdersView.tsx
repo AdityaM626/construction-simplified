@@ -1,114 +1,49 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChangeOrder } from '../../types';
 import { Badge } from '../common/Badge';
-import { GitPullRequest, CheckCircle2, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { api } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
+import { useProject } from '../../context/ProjectContext';
+import { Plus } from 'lucide-react';
 
 export const ChangeOrdersView: React.FC = () => {
-  const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>([
-    {
-      id: 'cho-1',
-      projectId: 'prj-101',
-      title: 'Upgrade Bedroom Flooring to Italian Marble Finish Vitrified Tiles',
-      reason: 'Homeowner selected premium 600x1200mm Somany Duragres vitrified tiles',
-      originalScope: 'Standard 600x600mm ceramic floor tiles',
-      proposedChange: 'Full body double-charged Italian marble gloss vitrified tiles',
-      costImpact: 85000,
-      timelineImpactDays: 3,
-      requestedBy: 'Rajesh Kumar',
-      requestedByRole: 'HOMEOWNER',
-      status: 'APPROVED',
-      approvedBy: 'Rajesh Kumar',
-      approvedAt: '2026-08-01T11:00:00.000Z',
-      createdAt: '2026-07-28T10:00:00.000Z'
-    },
-    {
-      id: 'cho-2',
-      projectId: 'prj-101',
-      title: 'Add Extra Concealed AC Electrical Conduit Points in Living Room',
-      reason: 'Additional split AC unit provision requested',
-      originalScope: '1 Split AC electrical point',
-      proposedChange: '2 Heavy duty 16A concealed copper wiring AC points',
-      costImpact: 14500,
-      timelineImpactDays: 1,
-      requestedBy: 'Vikram Singh (Apex Infra)',
-      requestedByRole: 'BUILDER',
-      status: 'UNDER_REVIEW',
-      createdAt: '2026-08-15T09:30:00.000Z'
-    }
-  ]);
+  const { currentUser } = useAuth();
+  const { activeProjectId, projects, refreshProjects } = useProject();
+  const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({ title: '', proposedChange: '', originalScope: '', reason: '', costImpact: '', timelineImpactDays: '' });
 
-  const handleApprove = (id: string) => {
-    setChangeOrders(prev => prev.map(c => c.id === id ? { ...c, status: 'APPROVED', approvedBy: 'Rajesh Kumar' } : c));
+  const load = async () => {
+    setLoading(true);
+    try { setChangeOrders(await api.getChangeRequests(activeProjectId)); setError(''); }
+    catch (err) { setError(err instanceof Error ? err.message : 'Could not load change orders.'); }
+    finally { setLoading(false); }
   };
+  useEffect(() => { void load(); }, [activeProjectId]);
 
-  const handleReject = (id: string) => {
-    setChangeOrders(prev => prev.map(c => c.id === id ? { ...c, status: 'REJECTED' } : c));
+  const decide = async (changeOrder: ChangeOrder, approved: boolean) => {
+    try {
+      await (approved ? api.approveChangeRequest(activeProjectId, changeOrder.id) : api.rejectChangeRequest(activeProjectId, changeOrder.id));
+      await Promise.all([load(), refreshProjects()]);
+    } catch (err) { setError(err instanceof Error ? err.message : 'Could not save this decision.'); }
   };
+  const create = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      await api.createChangeRequest(activeProjectId, { ...form, costImpact: Number(form.costImpact), timelineImpactDays: Number(form.timelineImpactDays) });
+      setForm({ title: '', proposedChange: '', originalScope: '', reason: '', costImpact: '', timelineImpactDays: '' });
+      setCreating(false); await load();
+    } catch (err) { setError(err instanceof Error ? err.message : 'Could not submit this change order.'); }
+  };
+  const project = projects.find(item => item.id === activeProjectId);
+  const canCreate = currentUser.role === 'BUILDER' || currentUser.role === 'HOMEOWNER';
 
-  return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Project Change Orders & Scope Revisions</h1>
-          <p className="text-xs text-slate-500 mt-1">Formal scope change approvals — Complete financial & timeline transparency</p>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {changeOrders.map((cho) => (
-          <div key={cho.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="font-bold text-sm text-slate-900">{cho.title}</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Reason: {cho.reason} • Requested by: {cho.requestedBy}</p>
-              </div>
-              <Badge status={cho.status} />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <div>
-                <span className="text-slate-400 block font-medium">Original Scope:</span>
-                <p className="font-bold text-slate-800 mt-0.5">{cho.originalScope}</p>
-              </div>
-              <div>
-                <span className="text-slate-400 block font-medium">Proposed Revision:</span>
-                <p className="font-bold text-blue-700 mt-0.5">{cho.proposedChange}</p>
-              </div>
-            </div>
-
-            {/* Impact Calculation Panel */}
-            <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <div className="flex items-center space-x-4 font-tabular">
-                <div>
-                  <span className="text-slate-500 block">Financial Cost Impact:</span>
-                  <span className="text-base font-bold text-emerald-700">+₹{cho.costImpact.toLocaleString('en-IN')}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">Timeline Impact:</span>
-                  <span className="text-base font-bold text-amber-700">+{cho.timelineImpactDays} Day(s)</span>
-                </div>
-              </div>
-
-              {cho.status === 'UNDER_REVIEW' && (
-                <div className="flex items-center space-x-2 w-full sm:w-auto">
-                  <button
-                    onClick={() => handleApprove(cho.id)}
-                    className="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-xs transition-colors"
-                  >
-                    Approve Scope Change
-                  </button>
-                  <button
-                    onClick={() => handleReject(cho.id)}
-                    className="flex-1 sm:flex-none px-3 py-2 bg-slate-200 hover:bg-rose-100 text-rose-700 font-bold rounded-xl text-xs transition-colors"
-                  >
-                    Reject
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  return <div className="max-w-5xl mx-auto space-y-6 py-4">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"><div><span className="text-xs font-bold text-blue-700 uppercase tracking-wider">Shared project record</span><h1 className="text-2xl font-bold text-slate-900">Change orders</h1><p className="text-xs text-slate-500 mt-1">Every scope decision is visible to the owner and contractor.</p></div>{canCreate && <button onClick={() => setCreating(!creating)} className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-2"><Plus className="w-4 h-4" />New change order</button>}</div>
+    {creating && <form onSubmit={create} className="bg-slate-900 text-white rounded-3xl p-6 grid grid-cols-1 sm:grid-cols-2 gap-4"><input required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Change title" className="sm:col-span-2 px-3 py-2.5 text-xs rounded-xl text-slate-900" /><input required value={form.originalScope} onChange={e => setForm({ ...form, originalScope: e.target.value })} placeholder="Original scope" className="px-3 py-2.5 text-xs rounded-xl text-slate-900" /><input required value={form.proposedChange} onChange={e => setForm({ ...form, proposedChange: e.target.value })} placeholder="Proposed scope" className="px-3 py-2.5 text-xs rounded-xl text-slate-900" /><input required min="0" type="number" value={form.costImpact} onChange={e => setForm({ ...form, costImpact: e.target.value })} placeholder="Cost impact (₹)" className="px-3 py-2.5 text-xs rounded-xl text-slate-900" /><input required min="0" type="number" value={form.timelineImpactDays} onChange={e => setForm({ ...form, timelineImpactDays: e.target.value })} placeholder="Timeline impact (days)" className="px-3 py-2.5 text-xs rounded-xl text-slate-900" /><input value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} placeholder="Reason (optional)" className="sm:col-span-2 px-3 py-2.5 text-xs rounded-xl text-slate-900" /><div className="sm:col-span-2 flex justify-end gap-2"><button type="button" onClick={() => setCreating(false)} className="px-4 py-2 text-xs font-bold">Cancel</button><button className="px-4 py-2 bg-amber-400 text-slate-900 rounded-xl text-xs font-bold">Submit for review</button></div></form>}
+    {error && <p className="text-xs font-semibold text-rose-700 bg-rose-50 p-3 rounded-xl">{error}</p>}
+    {loading ? <p className="text-sm text-slate-500">Loading change orders…</p> : changeOrders.length === 0 ? <div className="p-10 text-center bg-white border border-slate-200 rounded-3xl text-sm text-slate-500">No change orders for {project?.name || 'this project'}.</div> : <div className="space-y-4">{changeOrders.map(cho => <article key={cho.id} className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-sm"><div className="flex flex-col sm:flex-row justify-between gap-3"><div><h2 className="font-bold text-slate-900">{cho.title}</h2><p className="text-xs text-slate-500 mt-1">Requested by {cho.requestedBy} · {new Date(cho.createdAt).toLocaleDateString()}</p></div><Badge status={cho.status} /></div><div className="grid sm:grid-cols-2 gap-3 text-xs"><div className="p-3 bg-slate-50 rounded-xl"><span className="text-slate-400">Original scope</span><p className="font-semibold mt-1">{cho.originalScope || 'Not specified'}</p></div><div className="p-3 bg-blue-50 rounded-xl"><span className="text-blue-600">Proposed scope</span><p className="font-semibold mt-1">{cho.proposedChange}</p></div></div><div className="flex flex-col sm:flex-row justify-between gap-3 items-center p-4 bg-amber-50 rounded-2xl text-xs"><span className="font-bold text-slate-800">+₹{cho.costImpact.toLocaleString('en-IN')} · +{cho.timelineImpactDays} days</span>{currentUser.role === 'HOMEOWNER' && cho.status === 'PENDING' && <div className="flex gap-2"><button onClick={() => decide(cho, false)} className="px-3 py-2 bg-white rounded-lg font-bold text-slate-700">Reject</button><button onClick={() => decide(cho, true)} className="px-3 py-2 bg-emerald-600 text-white rounded-lg font-bold">Approve</button></div>}</div></article>)}</div>}
+  </div>;
 };

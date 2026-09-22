@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal } from './Modal';
 import { useAuth } from '../../context/AuthContext';
 import { MessageSquare, Send, UserCheck, HardHat } from 'lucide-react';
+import { api } from '../../api/client';
+import { useProject } from '../../context/ProjectContext';
 
 interface ContextualChatModalProps {
   isOpen: boolean;
@@ -19,31 +21,29 @@ export const ContextualChatModal: React.FC<ContextualChatModalProps> = ({
   title
 }) => {
   const { currentUser } = useAuth();
-  const [messages, setMessages] = useState([
-    {
-      id: 'msg-1',
-      senderName: 'Vikram Singh',
-      senderRole: 'BUILDER',
-      content: 'Hi Rajesh, the Italian marble rate includes polishing and seal coating. Let me know if you approve.',
-      timestamp: '15:30'
-    }
-  ]);
+  const { activeProjectId } = useProject();
+  const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
+  const [error, setError] = useState('');
 
-  const handleSend = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    setError('');
+    api.getMessages(entityType, entityId)
+      .then(setMessages)
+      .catch((err) => setError(err instanceof Error ? err.message : 'Could not load this conversation.'));
+  }, [isOpen, entityType, entityId, currentUser.id]);
+
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-
-    const newMsg = {
-      id: `msg-${Date.now()}`,
-      senderName: currentUser.fullName,
-      senderRole: currentUser.role,
-      content: input,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setMessages([...messages, newMsg]);
-    setInput('');
+    try {
+      const newMsg = await api.sendMessage({ projectId: activeProjectId, entityType, entityId, content: input.trim() });
+      setMessages(prev => [...prev, newMsg]);
+      setInput('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send your message.');
+    }
   };
 
   return (
@@ -57,14 +57,14 @@ export const ContextualChatModal: React.FC<ContextualChatModalProps> = ({
         {/* Message Stream */}
         <div className="h-64 overflow-y-auto space-y-3 p-3 bg-slate-50/50 rounded-2xl border border-slate-100">
           {messages.map((m) => {
-            const isMe = m.senderName === currentUser.fullName;
+            const isMe = m.senderId === currentUser.id;
             return (
               <div key={m.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                 <div className="flex items-center space-x-1.5 text-[10px] text-slate-400 mb-0.5">
                   <span className="font-bold text-slate-700">{m.senderName}</span>
                   <span>({m.senderRole})</span>
                   <span>•</span>
-                  <span>{m.timestamp}</span>
+                  <span>{new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 <div className={`p-3 rounded-2xl text-xs max-w-xs ${
                   isMe ? 'bg-blue-600 text-white font-medium' : 'bg-white text-slate-800 border border-slate-200/80 shadow-2xs'
@@ -93,6 +93,7 @@ export const ContextualChatModal: React.FC<ContextualChatModalProps> = ({
             <span>Send</span>
           </button>
         </form>
+        {error && <p className="text-xs font-semibold text-red-600">{error}</p>}
       </div>
     </Modal>
   );

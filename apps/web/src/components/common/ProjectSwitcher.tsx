@@ -18,7 +18,7 @@ export const ProjectSwitcher: React.FC = () => {
         <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
         <div className="truncate max-w-[140px] sm:max-w-[200px]">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block leading-none">Active Project</span>
-          <span className="text-xs font-bold text-slate-900 truncate block leading-tight mt-0.5">{currentProject.name}</span>
+          <span className="text-xs font-bold text-slate-900 truncate block leading-tight mt-0.5">{currentProject?.name || 'No assigned project'}</span>
         </div>
         <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
       </button>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { ClipboardList, CheckCircle2, Camera, Sun, Users, Wrench } from 'lucide-react';
+import { api } from '../../api/client';
+import { useProject } from '../../context/ProjectContext';
 
 interface DailySiteReportModalProps {
   isOpen: boolean;
@@ -9,17 +11,32 @@ interface DailySiteReportModalProps {
 
 export const DailySiteReportModal: React.FC<DailySiteReportModalProps> = ({ isOpen, onClose }) => {
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { activeProjectId } = useProject();
   const [workersCount, setWorkersCount] = useState('16');
   const [workCompleted, setWorkCompleted] = useState('Completed 1st floor column reinforcement & shuttering alignment.');
   const [materialsReceived, setMaterialsReceived] = useState('Received 350 bags UltraTech PPC Cement.');
   const [tomorrowsPlan, setTomorrowsPlan] = useState('Prepare concrete pour schedule for 1st floor roof slab.');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      onClose();
-    }, 1500);
+    setError('');
+    setSubmitting(true);
+    try {
+      await api.submitDailyReport(activeProjectId, {
+        workersPresentCount: workersCount,
+        workCompleted,
+        materialsReceived,
+        tomorrowsPlan
+      });
+      setSubmitted(true);
+      setTimeout(onClose, 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not submit the site report.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -84,13 +101,15 @@ export const DailySiteReportModal: React.FC<DailySiteReportModalProps> = ({ isOp
             </button>
             <button
               type="submit"
+              disabled={submitting}
               className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center space-x-1.5"
             >
               <ClipboardList className="w-4 h-4" />
-              <span>Submit Site Report</span>
+              <span>{submitting ? 'Submitting…' : 'Submit Site Report'}</span>
             </button>
           </div>
         )}
+        {error && <p className="text-xs font-semibold text-red-600">{error}</p>}
       </form>
     </Modal>
   );

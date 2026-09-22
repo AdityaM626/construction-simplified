@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:4000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
 
 export const getAuthToken = (): string | null => {
   return localStorage.getItem('construction_os_token');
@@ -43,6 +43,8 @@ export const api = {
   getMe: () => apiFetch('/auth/me'),
 
   // Project API
+  getProjects: () => apiFetch<any[]>('/projects'),
+  getProject: (projectId: string) => apiFetch(`/projects/${projectId}`),
   getHealth: (projectId: string) => apiFetch(`/projects/${projectId}/health`),
   getBOQ: (projectId: string) => apiFetch(`/projects/${projectId}/boq`),
   addBOQItem: (projectId: string, item: any) => apiFetch(`/projects/${projectId}/boq`, { method: 'POST', body: JSON.stringify(item) }),
@@ -50,6 +52,12 @@ export const api = {
   getDailyReports: (projectId: string) => apiFetch(`/projects/${projectId}/daily-reports`),
   submitDailyReport: (projectId: string, report: any) => apiFetch(`/projects/${projectId}/daily-reports`, { method: 'POST', body: JSON.stringify(report) }),
   approveChangeRequest: (projectId: string, reqId: string) => apiFetch(`/projects/${projectId}/change-requests/${reqId}/approve`, { method: 'POST' }),
+  rejectChangeRequest: (projectId: string, reqId: string) => apiFetch(`/projects/${projectId}/change-requests/${reqId}/reject`, { method: 'POST' }),
+  getChangeRequests: (projectId: string) => apiFetch(`/projects/${projectId}/change-requests`),
+  createChangeRequest: (projectId: string, data: any) => apiFetch(`/projects/${projectId}/change-requests`, { method: 'POST', body: JSON.stringify(data) }),
+  getIssues: (projectId: string) => apiFetch(`/projects/${projectId}/issues`),
+  createIssue: (projectId: string, data: any) => apiFetch(`/projects/${projectId}/issues`, { method: 'POST', body: JSON.stringify(data) }),
+  updateIssue: (projectId: string, issueId: string, data: any) => apiFetch(`/projects/${projectId}/issues/${issueId}`, { method: 'PATCH', body: JSON.stringify(data) }),
   getMessages: (entityType: string, entityId: string) => apiFetch(`/messages/${entityType}/${entityId}`),
   sendMessage: (data: any) => apiFetch('/messages', { method: 'POST', body: JSON.stringify(data) })
 };
