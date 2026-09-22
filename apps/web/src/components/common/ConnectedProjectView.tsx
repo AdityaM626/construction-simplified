@@ -6,24 +6,14 @@ import { HomePassportView } from './HomePassportView';
 import { BOQEstimationView } from '../builder/BOQEstimationView';
 import { BudgetVsActualView } from '../builder/BudgetVsActualView';
 import { Building2, Layers, CheckSquare, FileSpreadsheet, ShieldCheck, Award, Home, AlertTriangle } from 'lucide-react';
+import { useProject } from '../../context/ProjectContext';
 
 export const ConnectedProjectView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'timeline' | 'boq' | 'quality' | 'handover' | 'passport'>('overview');
-
-  const project = {
-    id: 'prj-101',
-    name: 'Sharma Residence / Kumar Villa (4BHK)',
-    location: 'Plot #42, Palm Meadows Enclave, Whitefield, Bengaluru',
-    homeownerName: 'Rajesh Kumar',
-    builderName: 'Apex Infrastructure & Builders',
-    builtUpAreaSqFt: 2750,
-    contractValue: 4500000,
-    spentCost: 1820000,
-    paidAmount: 1820000,
-    completionPercentage: 46,
-    projectHealth: 'HEALTHY',
-    status: 'IN_PROGRESS'
-  };
+  const { activeProjectId, projects } = useProject();
+  const project = projects.find(item => item.id === activeProjectId) || projects[0];
+  if (!project) return <p className="text-sm text-slate-500">No project is assigned to this account yet.</p>;
+  const contractValue = project.contractValue || project.totalBudget;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 py-4">
@@ -34,14 +24,14 @@ export const ConnectedProjectView: React.FC = () => {
             <div className="flex items-center space-x-2">
               <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Central Project Workspace</span>
               <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-100">
-                ● HEALTHY
+                ● {project.projectHealth || 'HEALTHY'}
               </span>
             </div>
             <h1 className="text-xl font-bold text-slate-900 mt-1">{project.name}</h1>
             <p className="text-xs text-slate-400 mt-0.5">{project.location} • Owner: <b>{project.homeownerName}</b> • Contractor: <b>{project.builderName}</b></p>
           </div>
 
-          <span className="text-xl font-bold text-slate-900 font-tabular">₹{(project.contractValue / 100000).toFixed(1)}L</span>
+          <span className="text-xl font-bold text-slate-900 font-tabular">₹{(contractValue / 100000).toFixed(1)}L</span>
         </div>
 
         {/* Tab Strip */}
@@ -119,11 +109,11 @@ export const ConnectedProjectView: React.FC = () => {
             </div>
             <div className="p-4 bg-slate-50 rounded-2xl space-y-1">
               <span className="text-slate-400 block font-medium">Contract Value</span>
-              <p className="font-bold text-slate-900 font-tabular text-sm">₹{project.contractValue.toLocaleString('en-IN')}</p>
+              <p className="font-bold text-slate-900 font-tabular text-sm">₹{contractValue.toLocaleString('en-IN')}</p>
             </div>
             <div className="p-4 bg-slate-50 rounded-2xl space-y-1">
               <span className="text-slate-400 block font-medium">Progress</span>
-              <p className="font-bold text-blue-600 font-tabular text-sm">{project.completionPercentage}% Complete</p>
+              <p className="font-bold text-blue-600 font-tabular text-sm">{project.completionPercentage || 0}% Complete</p>
             </div>
           </div>
         </div>
