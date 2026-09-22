@@ -53,7 +53,7 @@ export const Header: React.FC = () => {
               onClick={() => switchRole('HOMEOWNER')}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
                 currentUser.role === 'HOMEOWNER'
-                  ? 'bg-white text-blue-700 shadow-2xs font-extrabold'
+                  ? 'bg-blue-600 text-white shadow-2xs font-extrabold'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -64,7 +64,7 @@ export const Header: React.FC = () => {
               onClick={() => switchRole('BUILDER')}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
                 currentUser.role === 'BUILDER'
-                  ? 'bg-white text-blue-700 shadow-2xs font-extrabold'
+                  ? 'bg-amber-500 text-white shadow-2xs font-extrabold'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
