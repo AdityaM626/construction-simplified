@@ -77,10 +77,13 @@ model Project {
   name                 String
   type                 String   @default("NEW_CONSTRUCTION")
   location             String
-  plotAreaSqFt         Float
+  builtUpAreaSqFt     Float?
+  plotAreaSqFt         Float?
+  contractValue        Float?
   totalBudget          Float
   spentCost            Float    @default(0.0)
   committedCost        Float    @default(0.0)
+  paidAmount           Float?   @default(0.0)
   targetCompletionDate String
   status               String   @default("IN_PROGRESS")
   createdAt            DateTime @default(now())
@@ -96,6 +99,129 @@ model Project {
   documents            DocumentRecord[]
   ledgerEvents         ProjectLedgerEvent[]
   teamMembers          ConstructionTeamMember[]
+  boqs                 BOQ[]
+  changeOrders         ChangeOrder[]
+  issues               IssueRecord[]
+  dailySiteReports     DailySiteReport[]
+  qualityCheckpoints   QualityCheckpoint[]
+  defectRecords        DefectRecord[]
+}
+
+model BOQ {
+  id                  String    @id @default(uuid())
+  projectId           String
+  title               String
+  totalEstimatedValue Float
+  totalActualValue    Float?    @default(0.0)
+  variance            Float?    @default(0.0)
+  createdAt           DateTime  @default(now())
+
+  project             Project   @relation(fields: [projectId], references: [id])
+  items               BOQItem[]
+}
+
+model BOQItem {
+  id             String @id @default(uuid())
+  boqId          String
+  category       String
+  itemName       String
+  description    String?
+  quantity       Float  @default(1.0)
+  unit           String
+  estimatedRate  Float
+  estimatedTotal Float
+  actualSpent    Float  @default(0.0)
+  variance       Float  @default(0.0)
+
+  boq            BOQ    @relation(fields: [boqId], references: [id])
+}
+
+model ChangeOrder {
+  id                 String   @id @default(uuid())
+  projectId          String
+  title              String
+  description        String?
+  costImpact         Float
+  timelineImpactDays Int
+  requestedBy        String
+  requestedByRole    String
+  approvedBy         String?
+  approvedAt         String?
+  status             String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt          DateTime @default(now())
+
+  project            Project  @relation(fields: [projectId], references: [id])
+}
+
+model IssueRecord {
+  id              String   @id @default(uuid())
+  projectId       String
+  title           String
+  description     String
+  category        String?
+  createdBy       String
+  createdByRole   String
+  assignedTo      String?
+  photoUrl        String?
+  resolutionNotes String?
+  resolvedAt      String?
+  severity        String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  status          String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  createdAt       DateTime @default(now())
+
+  project         Project  @relation(fields: [projectId], references: [id])
+}
+
+model DailySiteReport {
+  id                  String   @id @default(uuid())
+  projectId           String
+  date                String
+  weather             String?
+  workersPresentCount Int      @default(10)
+  workCompleted       String
+  materialsReceived   String?
+  issuesEncountered   String?
+  photoUrls           String   // JSON stringified array of photo URLs
+  tomorrowsPlan       String
+  submittedBy         String
+  createdAt           DateTime @default(now())
+
+  project             Project  @relation(fields: [projectId], references: [id])
+}
+
+model QualityCheckpoint {
+  id             String   @id @default(uuid())
+  projectId      String
+  title          String
+  category       String   // WATERPROOFING, CONCRETE_CURING, REBAR_SPACING, SHUTTERING, PLUMBING_LEAK_TEST, ELECTRICAL_EARTHING
+  status         String   @default("PASS") // PASS, FAIL, REWORK_REQUIRED
+  inspectorName  String
+  inspectionDate String
+  notes          String
+  photoUrls      String   // JSON stringified array
+  createdAt      DateTime @default(now())
+
+  project        Project  @relation(fields: [projectId], references: [id])
+}
+
+model DefectRecord {
+  id               String    @id @default(uuid())
+  projectId        String
+  title            String
+  description      String
+  defectType       String    // CRACK, SEEPAGE, PAINT_DEFECT, ELECTRICAL_FAULT, PLUMBING_LEAK, OTHER
+  location         String
+  severity         String    @default("MEDIUM")
+  responsibleTrade String
+  reworkTimeDays   Int
+  reworkCost       Float
+  status           String    @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, VERIFIED_CLOSED
+  discoveredDate   String
+  resolvedDate     String?
+  photoUrl         String?
+  createdAt        DateTime  @default(now())
+
+  project          Project   @relation(fields: [projectId], references: [id])
 }
 
 model MaterialRequirement {
@@ -214,6 +340,9 @@ model Milestone {
   completionPercentage Int          @default(0)
   status               String       @default("PLANNED")
   allocatedBudget      Float
+  requiresOwnerApproval Boolean?    @default(true)
+  dependsOnMilestoneId String?
+  downstreamImpactWarning String?
   project              Project      @relation(fields: [projectId], references: [id])
   siteUpdates          SiteUpdate[]
 }
@@ -245,6 +374,18 @@ model DocumentRecord {
   uploadedAt     DateTime @default(now())
 
   project        Project  @relation(fields: [projectId], references: [id])
+}
+
+model ContextualMessage {
+  id          String   @id @default(uuid())
+  projectId   String
+  entityType  String   // PROJECT, MILESTONE, ISSUE, CHANGE_REQUEST, PAYMENT
+  entityId    String
+  senderId    String
+  senderName  String
+  senderRole  String
+  content     String
+  timestamp   DateTime @default(now())
 }
 
 model AuditEvent {

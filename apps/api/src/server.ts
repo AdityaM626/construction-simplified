@@ -1,6 +1,9 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import path from 'path';
+import fs from 'fs';
 import { db } from '@construction-os/db';
 import { UserRole, ProjectHealthStatus } from '@construction-os/types';
 
@@ -8,7 +11,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'construction-os-jwt-secret-2026';
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
+
+// Static uploads directory
+const UPLOADS_DIR = path.join(__dirname, '../uploads');
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -46,7 +57,7 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextF
   }
 };
 
-// 2. Object-Level Project Ownership & Authorization Middleware
+// 2. Object-Level Project Authorization Middleware
 const authorizeProjectAccess = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const projectId = req.params.id || req.body.projectId;
   if (!projectId) {
@@ -77,63 +88,88 @@ const authorizeProjectAccess = (req: AuthenticatedRequest, res: Response, next: 
 };
 
 // ============================================================================
-// AUTHENTICATION ENDPOINTS
+// AUTHENTICATION & SESSION ENDPOINTS (Real Hashing & JWT)
 // ============================================================================
 
 // Register User
-app.post('/api/auth/register', (req: Request, res: Response) => {
-  const { email, password, fullName, phone, role } = req.body;
+app.post('/api/auth/register', async (req: Request, res: Response) => {
+  try {
+    const { email, password, fullName, phone, role } = req.body;
 
-  if (!email || !fullName || !role) {
-    return res.status(400).json({ error: 'Email, fullName, and role are required' });
+    if (!email || !fullName || !role) {
+      return res.status(400).json({ error: 'Email, fullName, and role are required' });
+    }
+
+    const existingUser = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (existingUser) {
+      return res.status(400).json({ error: 'User with this email already exists' });
+    }
+
+    const passwordHash = password ? await bcrypt.hash(password, 10) : await bcrypt.hash('Password123!', 10);
+
+    const newUser = {
+      id: `usr-${Date.now()}`,
+      email: email.toLowerCase(),
+      fullName,
+      phone: phone || '',
+      role: (role as UserRole) || 'HOMEOWNER',
+      isVerified: true,
+      createdAt: new Date().toISOString()
+    };
+
+    db.users.push({ ...newUser, passwordHash } as any);
+    db.saveToDisk();
+
+    const token = jwt.sign(
+      { id: newUser.id, email: newUser.email, fullName: newUser.fullName, role: newUser.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return res.status(201).json({ user: newUser, token });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Registration failed' });
   }
-
-  const existingUser = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-  if (existingUser) {
-    return res.status(400).json({ error: 'User with this email already exists' });
-  }
-
-  const newUser = {
-    id: `usr-${Date.now()}`,
-    email: email.toLowerCase(),
-    fullName,
-    phone: phone || '',
-    role: (role as UserRole) || 'HOMEOWNER',
-    isVerified: true,
-    createdAt: new Date().toISOString()
-  };
-
-  db.users.push(newUser);
-
-  const token = jwt.sign(
-    { id: newUser.id, email: newUser.email, fullName: newUser.fullName, role: newUser.role },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-
-  return res.status(201).json({ user: newUser, token });
 });
 
 // Login User
-app.post('/api/auth/login', (req: Request, res: Response) => {
-  const { email, role } = req.body;
+app.post('/api/auth/login', async (req: Request, res: Response) => {
+  try {
+    const { email, password, role } = req.body;
 
-  if (!email) {
-    return res.status(400).json({ error: 'Email is required' });
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase() && (!role || u.role === role));
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials or user role' });
+    }
+
+    // Verify password if user has passwordHash
+    if (password && (user as any).passwordHash) {
+      const isValid = await bcrypt.compare(password, (user as any).passwordHash);
+      if (!isValid) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, fullName: user.fullName, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    const { passwordHash, ...userProfile } = user as any;
+    return res.json({ user: userProfile, token });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Login failed' });
   }
+});
 
-  const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase() && (!role || u.role === role));
-  if (!user) {
-    return res.status(401).json({ error: 'Invalid credentials or user role' });
-  }
-
-  const token = jwt.sign(
-    { id: user.id, email: user.email, fullName: user.fullName, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-
-  return res.json({ user, token });
+// Logout Endpoint
+app.post('/api/auth/logout', authenticateToken, (req: AuthenticatedRequest, res: Response) => {
+  return res.json({ message: 'Session logged out successfully' });
 });
 
 // Get Current User Profile
@@ -142,7 +178,42 @@ app.get('/api/auth/me', authenticateToken, (req: AuthenticatedRequest, res: Resp
   if (!user) {
     return res.status(404).json({ error: 'User profile not found' });
   }
-  return res.json(user);
+  const { passwordHash, ...userProfile } = user as any;
+  return res.json(userProfile);
+});
+
+// ============================================================================
+// LOCAL FILE STORAGE ENDPOINT
+// ============================================================================
+
+app.post('/api/upload', authenticateToken, (req: Request, res: Response) => {
+  try {
+    const { fileName, fileData } = req.body;
+    if (!fileName || !fileData) {
+      return res.status(400).json({ error: 'fileName and base64 fileData are required' });
+    }
+
+    const matches = fileData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    let buffer: Buffer;
+    if (matches && matches.length === 3) {
+      buffer = Buffer.from(matches[2], 'base64');
+    } else {
+      buffer = Buffer.from(fileData, 'base64');
+    }
+
+    const safeFileName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const targetPath = path.join(UPLOADS_DIR, safeFileName);
+    fs.writeFileSync(targetPath, buffer);
+
+    const fileUrl = `/uploads/${safeFileName}`;
+    return res.status(201).json({
+      fileUrl,
+      fileName: safeFileName,
+      sizeBytes: buffer.length
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'File upload failed' });
+  }
 });
 
 // ============================================================================
@@ -232,11 +303,42 @@ app.post('/api/projects/:id/boq', authenticateToken, authorizeProjectAccess, (re
   boq.totalEstimatedValue = boq.items.reduce((sum, i) => sum + i.estimatedTotal, 0);
 
   db.logLedger(project.id, req.user!.id, req.user!.fullName, req.user!.role, 'BOQ_CREATED', 'BOQ Item Added', `Contractor added BOQ item: ${newItem.itemName} (₹${estimatedTotal.toLocaleString('en-IN')})`, newItem.id);
+  db.saveToDisk();
 
   return res.status(201).json(newItem);
 });
 
-// 3. Budget vs Actual Category Matrix
+// 3. Milestones & Payment Request Flow
+app.get('/api/projects/:id/milestones', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  const milestones = db.milestones.filter(m => m.projectId === req.params.id);
+  return res.json(milestones);
+});
+
+app.post('/api/projects/:id/milestones/:milestoneId/approve', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  if (req.user!.role !== 'HOMEOWNER' && req.user!.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Only homeowners can approve milestone completions' });
+  }
+
+  const project = req.project;
+  const milestone = db.milestones.find(m => m.id === req.params.milestoneId && m.projectId === project.id);
+  if (!milestone) {
+    return res.status(404).json({ error: 'Milestone not found' });
+  }
+
+  milestone.status = 'COMPLETED';
+  milestone.completionPercentage = 100;
+  milestone.actualEndDate = new Date().toISOString().split('T')[0];
+
+  project.paidAmount = (project.paidAmount || 0) + milestone.allocatedBudget;
+  project.spentCost = (project.spentCost || 0) + milestone.allocatedBudget;
+
+  db.logLedger(project.id, req.user!.id, req.user!.fullName, req.user!.role, 'MILESTONE_APPROVED', 'Milestone Payment Approved', `Homeowner approved milestone: ${milestone.title} (Disbursed ₹${milestone.allocatedBudget.toLocaleString('en-IN')})`, milestone.id);
+  db.saveToDisk();
+
+  return res.json({ project, milestone });
+});
+
+// 4. Budget vs Actual Category Matrix
 app.get('/api/projects/:id/budget-vs-actual', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
   const project = req.project;
   return res.json({
@@ -248,7 +350,7 @@ app.get('/api/projects/:id/budget-vs-actual', authenticateToken, authorizeProjec
   });
 });
 
-// 4. Daily Site Reporting
+// 5. Daily Site Reporting
 app.get('/api/projects/:id/daily-reports', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
   const reports = db.dailySiteReports.filter(d => d.projectId === req.params.id);
   return res.json(reports);
@@ -279,11 +381,43 @@ app.post('/api/projects/:id/daily-reports', authenticateToken, authorizeProjectA
 
   db.dailySiteReports.unshift(report);
   db.logLedger(project.id, req.user!.id, req.user!.fullName, req.user!.role, 'DAILY_REPORT_SUBMITTED', 'Daily Site Report Logged', `Site report submitted: ${report.workCompleted}`, report.id);
+  db.saveToDisk();
 
   return res.status(201).json(report);
 });
 
-// 5. Change Order Approval (Homeowner Action - Idempotent & Scoped)
+// 6. Change Order Creation & Approval Flow
+app.get('/api/projects/:id/change-requests', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  const reqs = db.changeOrders.filter(c => c.projectId === req.params.id);
+  return res.json(reqs);
+});
+
+app.post('/api/projects/:id/change-requests', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  const { title, description, costImpact, timelineImpactDays, originalScope, proposedChange } = req.body;
+  const project = req.project;
+
+  const newChangeReq = {
+    id: `cho-${Date.now()}`,
+    projectId: project.id,
+    title: title || 'Scope & Material Upgrade Request',
+    description: description || '',
+    originalScope: originalScope || '',
+    proposedChange: proposedChange || '',
+    costImpact: Number(costImpact) || 0,
+    timelineImpactDays: Number(timelineImpactDays) || 0,
+    requestedBy: req.user!.fullName,
+    requestedByRole: req.user!.role,
+    status: 'PENDING' as const,
+    createdAt: new Date().toISOString()
+  };
+
+  db.changeOrders.unshift(newChangeReq);
+  db.logLedger(project.id, req.user!.id, req.user!.fullName, req.user!.role, 'CHANGE_REQUEST_CREATED', 'Change Order Created', `Submitted change request: ${newChangeReq.title} (+₹${newChangeReq.costImpact.toLocaleString('en-IN')})`, newChangeReq.id);
+  db.saveToDisk();
+
+  return res.status(201).json(newChangeReq);
+});
+
 app.post('/api/projects/:id/change-requests/:reqId/approve', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
   if (req.user!.role !== 'HOMEOWNER' && req.user!.role !== 'ADMIN') {
     return res.status(403).json({ error: 'Only the homeowner can approve change orders' });
@@ -308,11 +442,95 @@ app.post('/api/projects/:id/change-requests/:reqId/approve', authenticateToken, 
   project.totalBudget += changeReq.costImpact;
 
   db.logLedger(project.id, req.user!.id, req.user!.fullName, req.user!.role, 'CHANGE_REQUEST_APPROVED', 'Change Request Approved', `Approved change: ${changeReq.title} (+₹${changeReq.costImpact.toLocaleString('en-IN')})`, changeReq.id);
+  db.saveToDisk();
 
   return res.json({ project, changeReq });
 });
 
-// 6. Contextual Messaging
+// 7. Defects & Quality Remediation Loop
+app.get('/api/projects/:id/defects', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  const defects = db.defectRecords.filter(d => d.projectId === req.params.id);
+  return res.json(defects);
+});
+
+app.post('/api/projects/:id/defects', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  const { title, description, defectType, location, severity, responsibleTrade, reworkTimeDays, reworkCost, photoUrl } = req.body;
+  const project = req.project;
+
+  const defect = {
+    id: `def-${Date.now()}`,
+    projectId: project.id,
+    title: title || 'Site Defect Identified',
+    description: description || '',
+    defectType: defectType || 'OTHER',
+    location: location || 'Site',
+    severity: severity || 'MEDIUM',
+    responsibleTrade: responsibleTrade || 'General',
+    reworkTimeDays: Number(reworkTimeDays) || 1,
+    reworkCost: Number(reworkCost) || 0,
+    status: 'OPEN' as const,
+    discoveredDate: new Date().toISOString().split('T')[0],
+    photoUrl: photoUrl || '',
+    createdAt: new Date().toISOString()
+  };
+
+  db.defectRecords.unshift(defect);
+  db.logLedger(project.id, req.user!.id, req.user!.fullName, req.user!.role, 'DEFECT_RAISED', 'Defect Logged', `Raised defect: ${defect.title}`, defect.id);
+  db.saveToDisk();
+
+  return res.status(201).json(defect);
+});
+
+app.post('/api/projects/:id/defects/:defectId/verify', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  if (req.user!.role !== 'HOMEOWNER' && req.user!.role !== 'ADMIN') {
+    return res.status(403).json({ error: 'Only homeowners can verify defect closure' });
+  }
+
+  const project = req.project;
+  const defect = db.defectRecords.find(d => d.id === req.params.defectId && d.projectId === project.id);
+  if (!defect) {
+    return res.status(404).json({ error: 'Defect record not found' });
+  }
+
+  defect.status = 'VERIFIED_CLOSED';
+  defect.resolvedDate = new Date().toISOString().split('T')[0];
+
+  db.logLedger(project.id, req.user!.id, req.user!.fullName, req.user!.role, 'DEFECT_CLOSED', 'Defect Verified & Closed', `Homeowner verified defect remediation: ${defect.title}`, defect.id);
+  db.saveToDisk();
+
+  return res.json(defect);
+});
+
+// 8. Documents Vault
+app.get('/api/projects/:id/documents', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  const docs = db.documents.filter(d => d.projectId === req.params.id);
+  return res.json(docs);
+});
+
+app.post('/api/projects/:id/documents', authenticateToken, authorizeProjectAccess, (req: AuthenticatedRequest, res: Response) => {
+  const { title, category, fileUrl, sizeBytes } = req.body;
+  const project = req.project;
+
+  const doc = {
+    id: `doc-${Date.now()}`,
+    projectId: project.id,
+    title: title || 'Project Document',
+    category: category || 'OTHER',
+    fileUrl: fileUrl || '/uploads/sample.pdf',
+    uploadedBy: req.user!.fullName,
+    uploadedByRole: req.user!.role,
+    sizeBytes: Number(sizeBytes) || 1024,
+    uploadedAt: new Date().toISOString()
+  };
+
+  db.documents.unshift(doc);
+  db.logLedger(project.id, req.user!.id, req.user!.fullName, req.user!.role, 'DOCUMENT_UPLOADED', 'Document Uploaded', `Uploaded document: ${doc.title}`, doc.id);
+  db.saveToDisk();
+
+  return res.status(201).json(doc);
+});
+
+// 9. Contextual Messaging
 app.get('/api/messages/:entityType/:entityId', authenticateToken, (req: Request, res: Response) => {
   const msgs = db.contextualMessages.filter(m => m.entityType === req.params.entityType && m.entityId === req.params.entityId);
   return res.json(msgs);
@@ -333,6 +551,7 @@ app.post('/api/messages', authenticateToken, (req: AuthenticatedRequest, res: Re
   };
 
   db.contextualMessages.push(newMsg);
+  db.saveToDisk();
   return res.status(201).json(newMsg);
 });
 

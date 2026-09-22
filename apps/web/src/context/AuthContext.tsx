@@ -1,81 +1,125 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
+import { api, setAuthToken, clearAuthToken, getAuthToken } from '../api/client';
 
 interface AuthContextType {
   currentUser: User;
-  switchRole: (role: UserRole) => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  switchRole: (role: UserRole) => void;
+  loginWithApi: (email: string, password?: string, role?: string) => Promise<void>;
+  registerWithApi: (data: any) => Promise<void>;
+  logout: () => void;
   isMobileViewport: boolean;
-  setIsMobileViewport: (val: boolean) => void;
 }
 
-const demoUsers: Record<UserRole, User> = {
-  HOMEOWNER: {
-    id: 'usr-homeowner-1',
-    email: 'rajesh.homeowner@gmail.com',
-    fullName: 'Rajesh Kumar',
-    phone: '+91 98765 43210',
-    role: 'HOMEOWNER',
-    isVerified: true,
-    createdAt: new Date().toISOString(),
-  },
-  BUILDER: {
-    id: 'usr-builder-1',
-    email: 'contact@apexinfra.com',
-    fullName: 'Vikram Singh (Apex Infra)',
-    phone: '+91 98111 22334',
-    role: 'BUILDER',
-    isVerified: true,
-    createdAt: new Date().toISOString(),
-  },
-  ADMIN: {
-    id: 'usr-admin-1',
-    email: 'admin@construction-os.io',
-    fullName: 'Platform Ops Admin',
-    phone: '+91 90000 00000',
-    role: 'ADMIN',
-    isVerified: true,
-    createdAt: new Date().toISOString(),
-  },
-  DEALER: {
-    id: 'usr-dealer-1',
-    email: 'sales@ultratechoutlet.in',
-    fullName: 'Suresh Agarwal (UltraTech Cement Outlet)',
-    phone: '+91 99888 77665',
-    role: 'DEALER',
-    isVerified: true,
-    createdAt: new Date().toISOString(),
-  }
+const defaultUser: User = {
+  id: 'usr-homeowner-1',
+  email: 'owner@sharmahouse.com',
+  fullName: 'Rajesh Kumar',
+  phone: '+91 98765 43210',
+  role: 'HOMEOWNER',
+  isVerified: true,
+  createdAt: new Date().toISOString()
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User>(demoUsers.HOMEOWNER);
+  const [currentUser, setCurrentUser] = useState<User>(defaultUser);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isMobileViewport, setIsMobileViewport] = useState<boolean>(false);
 
-  const switchRole = (role: UserRole) => {
-    if (demoUsers[role]) {
-      setCurrentUser(demoUsers[role]);
-      if (role === 'HOMEOWNER') setActiveTab('dashboard');
-      else if (role === 'BUILDER') setActiveTab('projects');
-      else if (role === 'ADMIN') setActiveTab('verifications');
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileViewport(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    // Try restoring token session from localStorage
+    const token = getAuthToken();
+    if (token) {
+      api.getMe()
+        .then(user => {
+          if (user && user.id) {
+            setCurrentUser(user);
+          }
+        })
+        .catch(() => {
+          clearAuthToken();
+        });
+    }
+  }, []);
+
+  const loginWithApi = async (email: string, password?: string, role?: string) => {
+    const res = await api.login(email, password, role);
+    if (res.token && res.user) {
+      setAuthToken(res.token);
+      setCurrentUser(res.user);
+      setActiveTab(res.user.role === 'BUILDER' ? 'projects' : 'dashboard');
     }
   };
 
+  const registerWithApi = async (data: any) => {
+    const res = await api.register(data);
+    if (res.token && res.user) {
+      setAuthToken(res.token);
+      setCurrentUser(res.user);
+      setActiveTab(res.user.role === 'BUILDER' ? 'projects' : 'dashboard');
+    }
+  };
+
+  const logout = () => {
+    clearAuthToken();
+    setCurrentUser(defaultUser);
+    setActiveTab('dashboard');
+  };
+
+  const switchRole = (role: UserRole) => {
+    let mockUser: User = { ...defaultUser, role };
+    if (role === 'BUILDER') {
+      mockUser = {
+        id: 'usr-builder-1',
+        email: 'vikram@apexinfra.com',
+        fullName: 'Vikram Singh (Apex Infra)',
+        phone: '+91 99887 76655',
+        role: 'BUILDER',
+        isVerified: true,
+        createdAt: new Date().toISOString()
+      };
+      setActiveTab('projects');
+    } else if (role === 'ADMIN') {
+      mockUser = {
+        id: 'usr-admin-1',
+        email: 'ops@construction.os',
+        fullName: 'Platform Ops Admin',
+        phone: '+91 90000 00000',
+        role: 'ADMIN',
+        isVerified: true,
+        createdAt: new Date().toISOString()
+      };
+      setActiveTab('verifications');
+    } else {
+      setActiveTab('dashboard');
+    }
+    setCurrentUser(mockUser);
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        currentUser,
-        switchRole,
-        activeTab,
-        setActiveTab,
-        isMobileViewport,
-        setIsMobileViewport,
-      }}
-    >
+    <AuthContext.Provider value={{
+      currentUser,
+      activeTab,
+      setActiveTab,
+      switchRole,
+      loginWithApi,
+      registerWithApi,
+      logout,
+      isMobileViewport
+    }}>
       {children}
     </AuthContext.Provider>
   );
