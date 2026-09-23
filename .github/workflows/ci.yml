@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://construction:construction@localhost:5432/construction_ci?schema=public
+      JWT_SECRET: ci-test-secret-must-be-at-least-32-characters
     services:
       postgres:
         image: postgres:16

@@ -29,7 +29,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, defaultMo
 
     try {
       if (mode === 'login') {
-        await loginWithApi(email, password, role);
+        await loginWithApi(email, password);
       } else {
         await registerWithApi({ email, password, fullName, phone, role });
       }
