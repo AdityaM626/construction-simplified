@@ -1,0 +1,228 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  HOMEOWNER
+  BUILDER
+  PROCUREMENT
+  ADMIN
+}
+
+enum ProjectRole {
+  HOMEOWNER
+  BUILDER
+  PROCUREMENT
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+}
+
+enum MilestoneStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  AWAITING_APPROVAL
+  COMPLETED
+}
+
+enum ChangeOrderStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DefectStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  VERIFIED_CLOSED
+}
+
+enum MaterialRequestStatus {
+  REQUESTED
+  ACCEPTED
+  DISPATCHED
+  DELIVERED
+}
+
+model User {
+  id           String          @id @default(uuid()) @db.Uuid
+  email        String          @unique
+  fullName     String
+  passwordHash String
+  role         UserRole        @default(HOMEOWNER)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  projects     ProjectMember[]
+  owned        Project[]       @relation("ProjectOwner")
+  auditEvents  AuditEvent[]
+}
+
+model Project {
+  id                   String          @id @default(uuid()) @db.Uuid
+  ownerId              String          @db.Uuid
+  owner                User            @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  name                 String
+  type                 String
+  location             String
+  totalBudget          Decimal         @db.Decimal(14, 2)
+  targetCompletionDate DateTime        @db.Date
+  status               ProjectStatus   @default(PLANNING)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  members              ProjectMember[]
+  milestones           Milestone[]
+  boqItems             BOQItem[]
+  changeOrders         ChangeOrder[]
+  siteReports          SiteReport[]
+  defects              Defect[]
+  documents            ProjectDocument[]
+  materialRequests     MaterialRequest[]
+  auditEvents          AuditEvent[]
+
+  @@index([ownerId])
+}
+
+model ProjectMember {
+  projectId String      @db.Uuid
+  userId    String      @db.Uuid
+  role      ProjectRole
+  createdAt DateTime    @default(now())
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+  @@index([userId])
+}
+
+model Milestone {
+  id              String          @id @default(uuid()) @db.Uuid
+  projectId       String          @db.Uuid
+  project         Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title           String
+  plannedEndDate  DateTime        @db.Date
+  allocatedBudget Decimal         @db.Decimal(14, 2)
+  status          MilestoneStatus @default(NOT_STARTED)
+  completedAt     DateTime?
+  approvedAt      DateTime?
+  createdAt       DateTime        @default(now())
+
+  @@index([projectId, status])
+}
+
+model BOQItem {
+  id             String   @id @default(uuid()) @db.Uuid
+  projectId      String   @db.Uuid
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  description    String
+  category       String
+  quantity       Decimal  @db.Decimal(14, 3)
+  unit           String
+  estimatedRate  Decimal  @db.Decimal(14, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+model ChangeOrder {
+  id                 String            @id @default(uuid()) @db.Uuid
+  projectId          String            @db.Uuid
+  project            Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title              String
+  description        String
+  costImpact         Decimal           @db.Decimal(14, 2)
+  timelineImpactDays Int
+  status             ChangeOrderStatus @default(PENDING)
+  requestedById      String            @db.Uuid
+  approvedById       String?           @db.Uuid
+  createdAt          DateTime          @default(now())
+  decidedAt          DateTime?
+
+  @@index([projectId, status])
+}
+
+model SiteReport {
+  id                  String   @id @default(uuid()) @db.Uuid
+  projectId           String   @db.Uuid
+  project             Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  authorId            String   @db.Uuid
+  reportDate          DateTime @db.Date
+  workCompleted       String
+  materialsReceived   String?
+  issuesEncountered   String?
+  nextPlan            String?
+  createdAt           DateTime @default(now())
+
+  @@index([projectId, reportDate])
+}
+
+model Defect {
+  id             String       @id @default(uuid()) @db.Uuid
+  projectId      String       @db.Uuid
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title          String
+  description    String
+  severity       String
+  status         DefectStatus @default(OPEN)
+  raisedById     String       @db.Uuid
+  verifiedById   String?      @db.Uuid
+  createdAt      DateTime     @default(now())
+  resolvedAt     DateTime?
+
+  @@index([projectId, status])
+}
+
+model ProjectDocument {
+  id           String   @id @default(uuid()) @db.Uuid
+  projectId    String   @db.Uuid
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title        String
+  category     String
+  storageKey   String
+  uploadedById String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model MaterialRequest {
+  id           String                @id @default(uuid()) @db.Uuid
+  projectId    String                @db.Uuid
+  project      Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  itemName     String
+  quantity     Decimal               @db.Decimal(14, 3)
+  unit         String
+  status       MaterialRequestStatus @default(REQUESTED)
+  requestedById String               @db.Uuid
+  handledById  String?               @db.Uuid
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([projectId, status])
+}
+
+model AuditEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String   @db.Uuid
+  actor     User     @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  projectId String?  @db.Uuid
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  action    String
+  entityId  String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
+  @@index([actorId, createdAt])
+}

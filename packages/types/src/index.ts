@@ -1,8 +1,7 @@
-/** Product personas; procurement access is planned, not yet an authentication role. */
+/** Production product personas. */
 export type ProductPersona = 'HOMEOWNER' | 'BUILDER' | 'PROCUREMENT' | 'ADMIN';
 
-/** Legacy demo authentication roles. DEALER remains until the Sprint 2 migration. */
-export type UserRole = 'HOMEOWNER' | 'BUILDER' | 'ADMIN' | 'DEALER';
+export type UserRole = ProductPersona;
 
 export type ConstructionTeamRole = 
   | 'CONTRACTOR'
@@ -56,10 +55,10 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
-  phone: string;
+  phone?: string;
   role: UserRole;
-  isVerified: boolean;
-  createdAt: string;
+  isVerified?: boolean;
+  createdAt?: string;
 }
 
 export interface ConstructionTeamMember {

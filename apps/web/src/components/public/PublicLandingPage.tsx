@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ShieldCheck, Building2, ShoppingBag, CheckCircle2, ArrowRight, Layers, Users, BookOpen } from 'lucide-react';
 
 export const PublicLandingPage: React.FC = () => {
-  const { setActiveTab, switchRole } = useAuth();
+  const { setActiveTab } = useAuth();
 
   return (
     <div className="max-w-5xl mx-auto space-y-16 py-8">
@@ -27,7 +27,7 @@ export const PublicLandingPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-2">
           <button
             onClick={() => {
-              switchRole('HOMEOWNER');
+              setActiveTab('projects');
               setActiveTab('dashboard');
             }}
             className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-2xl shadow-md transition-all flex items-center justify-center space-x-2"
@@ -38,7 +38,7 @@ export const PublicLandingPage: React.FC = () => {
 
           <button
             onClick={() => {
-              switchRole('BUILDER');
+              setActiveTab('projects');
               setActiveTab('projects');
             }}
             className="px-8 py-3.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-2xl transition-all flex items-center justify-center space-x-2"

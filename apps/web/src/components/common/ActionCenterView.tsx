@@ -37,7 +37,7 @@ export const ActionCenterView: React.FC = () => {
     }
   ];
 
-  const visibleActions = actions.filter(a => a.targetRole === currentUser.role || currentUser.role === 'ADMIN');
+  const visibleActions = actions.filter(a => a.targetRole === currentUser?.role || currentUser?.role === 'ADMIN');
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 py-4">
