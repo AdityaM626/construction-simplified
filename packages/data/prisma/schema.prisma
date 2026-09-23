@@ -55,6 +55,14 @@ enum MaterialRequestStatus {
   DELIVERED
 }
 
+enum PurchaseOrderStatus {
+  ISSUED
+  DISPATCHED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  EXCEPTION
+}
+
 model User {
   id           String          @id @default(uuid()) @db.Uuid
   email        String          @unique
@@ -88,6 +96,10 @@ model Project {
   defects              Defect[]
   documents            ProjectDocument[]
   materialRequests     MaterialRequest[]
+  vendors              Vendor[]
+  quotations           Quotation[]
+  purchaseOrders       PurchaseOrder[]
+  goodsReceipts        GoodsReceipt[]
   auditEvents          AuditEvent[]
 
   @@index([ownerId])
@@ -131,6 +143,7 @@ model BOQItem {
   estimatedRate  Decimal  @db.Decimal(14, 2)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  materialRequest MaterialRequest?
 
   @@index([projectId])
 }
@@ -200,16 +213,103 @@ model MaterialRequest {
   id           String                @id @default(uuid()) @db.Uuid
   projectId    String                @db.Uuid
   project      Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  boqItemId    String?               @unique @db.Uuid
+  boqItem      BOQItem?              @relation(fields: [boqItemId], references: [id], onDelete: SetNull)
   itemName     String
   quantity     Decimal               @db.Decimal(14, 3)
   unit         String
+  neededBy     DateTime?             @db.Date
+  notes        String?
   status       MaterialRequestStatus @default(REQUESTED)
   requestedById String               @db.Uuid
   handledById  String?               @db.Uuid
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
+  quotations   Quotation[]
+  purchaseOrder PurchaseOrder?
 
   @@index([projectId, status])
+}
+
+model Vendor {
+  id             String          @id @default(uuid()) @db.Uuid
+  projectId      String          @db.Uuid
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name           String
+  contactName    String?
+  email          String?
+  phone          String?
+  taxId          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  quotations     Quotation[]
+  purchaseOrders PurchaseOrder[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+}
+
+model Quotation {
+  id            String          @id @default(uuid()) @db.Uuid
+  projectId     String          @db.Uuid
+  project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requestId     String          @db.Uuid
+  request       MaterialRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  vendorId      String          @db.Uuid
+  vendor        Vendor          @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+  unitPrice     Decimal         @db.Decimal(14, 2)
+  leadTimeDays  Int
+  validUntil    DateTime?       @db.Date
+  notes         String?
+  createdAt     DateTime        @default(now())
+  purchaseOrder PurchaseOrder?
+
+  @@unique([requestId, vendorId])
+  @@index([projectId, requestId])
+}
+
+model PurchaseOrder {
+  id               String              @id @default(uuid()) @db.Uuid
+  projectId        String              @db.Uuid
+  project          Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requestId        String              @unique @db.Uuid
+  request          MaterialRequest     @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  quotationId      String              @unique @db.Uuid
+  quotation        Quotation           @relation(fields: [quotationId], references: [id], onDelete: Restrict)
+  vendorId         String              @db.Uuid
+  vendor           Vendor              @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+  quantity         Decimal             @db.Decimal(14, 3)
+  unitPrice        Decimal             @db.Decimal(14, 2)
+  acceptedQuantity Decimal             @default(0) @db.Decimal(14, 3)
+  damagedQuantity  Decimal             @default(0) @db.Decimal(14, 3)
+  status           PurchaseOrderStatus @default(ISSUED)
+  expectedDate     DateTime?           @db.Date
+  trackingReference String?
+  issuedById       String              @db.Uuid
+  issuedAt         DateTime            @default(now())
+  dispatchedAt     DateTime?
+  receivedAt       DateTime?
+  receipts         GoodsReceipt[]
+
+  @@index([projectId, status])
+}
+
+model GoodsReceipt {
+  id               String        @id @default(uuid()) @db.Uuid
+  projectId        String        @db.Uuid
+  project          Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  purchaseOrderId  String        @db.Uuid
+  purchaseOrder    PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  acceptedQuantity Decimal       @db.Decimal(14, 3)
+  damagedQuantity  Decimal       @default(0) @db.Decimal(14, 3)
+  finalDelivery    Boolean
+  evidenceReference String?
+  notes            String?
+  recordedById     String        @db.Uuid
+  createdAt        DateTime      @default(now())
+
+  @@index([projectId, createdAt])
+  @@index([purchaseOrderId])
 }
 
 model AuditEvent {

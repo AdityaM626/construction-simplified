@@ -200,16 +200,27 @@ export function registerWorkflows(
   }));
 
   app.get('/api/projects/:id/material-requests', authenticate, projectAccess, route(async (req, res) => {
-    return res.json(await prisma.materialRequest.findMany({ where: { projectId: req.params.id }, orderBy: { createdAt: 'desc' } }));
+    return res.json(await prisma.materialRequest.findMany({ where: { projectId: req.params.id },
+      include: { boqItem: { select: { id: true, description: true, category: true } },
+        purchaseOrder: { select: { id: true, status: true } } }, orderBy: { createdAt: 'desc' } }));
   }));
   app.post('/api/projects/:id/material-requests', authenticate, projectAccess, route(async (req, res) => {
     if (!authorized(req, res, ['BUILDER', 'ADMIN'])) return;
-    const itemName = text(req.body.itemName);
-    const unit = text(req.body.unit, 30);
     const quantity = decimal(req.body.quantity, 3);
-    if (!itemName || !unit || !quantity) return res.status(400).json({ error: 'Valid material request details are required' });
+    const boqItem = req.body.boqItemId ? await prisma.bOQItem.findFirst({ where: {
+      id: req.body.boqItemId, projectId: req.params.id
+    } }) : null;
+    if (req.body.boqItemId && !boqItem) return res.status(404).json({ error: 'BOQ item not found in this project' });
+    const itemName = boqItem?.description || text(req.body.itemName);
+    const unit = boqItem?.unit || text(req.body.unit, 30);
+    const neededBy = req.body.neededBy ? new Date(req.body.neededBy) : null;
+    if (!itemName || !unit || !quantity || (neededBy && !Number.isFinite(neededBy.getTime())) ||
+        (boqItem && boqItem.quantity.lt(quantity))) {
+      return res.status(400).json({ error: 'Valid material request details are required; BOQ quantity cannot be exceeded' });
+    }
     const request = await prisma.materialRequest.create({ data: {
-      projectId: req.params.id, itemName, unit, quantity, requestedById: req.account!.id
+      projectId: req.params.id, boqItemId: boqItem?.id, itemName, unit, quantity,
+      neededBy, notes: text(req.body.notes, 2000) || null, requestedById: req.account!.id
     } });
     await audit(req.params.id, req.account!.id, 'MATERIAL_REQUESTED', request.id);
     return res.status(201).json(request);
@@ -218,11 +229,10 @@ export function registerWorkflows(
     if (!authorized(req, res, ['PROCUREMENT', 'ADMIN'])) return;
     const request = await prisma.materialRequest.findFirst({ where: { id: req.params.requestId, projectId: req.params.id } });
     if (!request) return res.status(404).json({ error: 'Material request not found' });
-    const next = { REQUESTED: 'ACCEPTED', ACCEPTED: 'DISPATCHED', DISPATCHED: 'DELIVERED' } as const;
-    if (request.status === 'DELIVERED') return res.status(409).json({ error: 'Request already delivered' });
+    if (request.status !== 'REQUESTED') return res.status(409).json({ error: 'Use purchase order dispatch and site receipt for later stages' });
     const changed = await prisma.materialRequest.updateMany({ where: {
-      id: request.id, projectId: req.params.id, status: request.status
-    }, data: { status: next[request.status], handledById: req.account!.id } });
+      id: request.id, projectId: req.params.id, status: 'REQUESTED'
+    }, data: { status: 'ACCEPTED', handledById: req.account!.id } });
     if (changed.count !== 1) return res.status(409).json({ error: 'Material request has advanced; refresh it' });
     const updated = await prisma.materialRequest.findUniqueOrThrow({ where: { id: request.id } });
     await audit(req.params.id, req.account!.id, `MATERIAL_${updated.status}`, request.id);

@@ -28,4 +28,6 @@ The `packages/db` JSON seed remains as reference data but is not used by the liv
 
 The [Sprint 3 workflow guide](docs/sprint-3-project-workflows.md) lists each role's project actions and the limits of document references and milestone approval.
 
+The [Sprint 4 procurement guide](docs/sprint-4-procurement-logistics.md) covers supplier quotations, purchase orders, dispatch, site receipts, budget commitments and exception handling.
+
 See [Sprint 0 foundation](docs/sprint-0-foundation.md) for the current boundaries and remaining work.
