@@ -4,8 +4,8 @@ import bcrypt from 'bcryptjs';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { createDataClient } from '@construction-os/data';
 
-const secret = process.env.JWT_SECRET;
-if (!secret || secret.length < 32) throw new Error('JWT_SECRET must contain at least 32 characters');
+const secret = process.env.JWT_SECRET || '';
+if (secret.length < 32) throw new Error('JWT_SECRET must contain at least 32 characters');
 
 export const prisma = createDataClient();
 export const app = express();
