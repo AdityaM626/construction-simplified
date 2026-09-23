@@ -57,7 +57,7 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextF
   }
 };
 
-// 2. Object-Level Project Authorization Middleware
+// 2. Existing project access boundary. Procurement membership is introduced in Sprint 2.
 const authorizeProjectAccess = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const projectId = req.params.id || req.body.projectId;
   if (!projectId) {
@@ -81,6 +81,11 @@ const authorizeProjectAccess = (req: AuthenticatedRequest, res: Response, next: 
 
   if (user.role === 'BUILDER' && project.builderId !== user.id) {
     return res.status(403).json({ error: 'Access denied: You are not assigned to this project' });
+  }
+
+  // Legacy roles have no project membership model yet; deny them by default.
+  if (user.role !== 'HOMEOWNER' && user.role !== 'BUILDER') {
+    return res.status(403).json({ error: 'Access denied: No project access for this role' });
   }
 
   req.project = project;

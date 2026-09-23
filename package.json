@@ -2,18 +2,21 @@
   "name": "construction-os",
   "version": "1.0.0",
   "private": true,
-  "description": "Construction OS — Master Platform for Homeowners, Builders, Dealers and Operations",
+  "description": "Construction OS — project workspaces for homeowners, builders/contractors, procurement/logistics, and platform administrators",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace=@construction-os/types && npm run build --workspace=@construction-os/db && npm run build --workspace=@construction-os/api && npm run build --workspace=@construction-os/web",
     "db:seed": "npm run seed --workspace=packages/db",
-    "test": "node scripts/test-system.js"
+    "test": "node scripts/test-system.js && node scripts/test-project-access.cjs",
+    "typecheck": "npm run build --workspace=@construction-os/types && npm run build --workspace=@construction-os/db && npm run typecheck --workspaces --if-present",
+    "pretest": "npm run build"
   },
   "devDependencies": {
     "typescript": "^5.3.3"
-  }
+  },
+  "type": "module"
 }
