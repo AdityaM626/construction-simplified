@@ -1,0 +1,11 @@
+# Sprint 4: procurement and logistics
+
+The live project workspace now connects material requirements to sourcing and site delivery. The builder can request materials against a BOQ item (up to its planned quantity) or raise an ad hoc request. A BOQ item can be linked to one request in this release. Procurement accepts the request, records project suppliers and their quotations, then selects a quotation to issue a purchase order. A supplier is a project business record, not a login account.
+
+The purchase order stores the quoted unit price and requested quantity. Before issue, the API checks the sum of all project purchase-order commitments against the project's current total budget. This check uses decimal arithmetic in a serializable transaction. It is a purchasing guard, not an accounting system or a payment authorization. Existing commitments stay on the ledger after delivery or an exception. Quote comparisons display price and lead time; a quote with an expired validity date cannot be selected.
+
+Procurement records dispatch with a tracking reference. The builder records one or more site receipts, each with accepted and damaged quantities and an evidence reference. The API rejects receipts that exceed the ordered quantity. A fully accepted final receipt marks the order `RECEIVED` and the material request `DELIVERED`. A final receipt with shortage or damage marks the order `EXCEPTION` and retains the request as `DISPATCHED`, so it cannot be mistaken for fulfilled work. The exception is visible in the procurement summary. Exception resolution, supplier returns, replacement orders, payments, and actual file uploads are outside this sprint; evidence references point to externally managed material.
+
+All reads require project membership. Builders can raise requests and record receipts; procurement can accept requests, record suppliers and quotes, issue orders, and dispatch; administrators can perform both. Homeowners can inspect the records and budget summary. Every write creates a project activity event.
+
+The `20260923020000_procurement_logistics` migration adds BOQ links, suppliers, quotations, purchase orders and goods receipts. Deploy migrations before starting the updated API. CI validates the Prisma schema, applies all migrations to PostgreSQL, builds the packages, and exercises the HTTP workflow and role checks.

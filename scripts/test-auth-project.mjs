@@ -66,9 +66,10 @@ test('accounts, project creation and membership authorization', async () => {
     assert.equal((await request(path + '/boq', 'POST', {
       description: 'Cement', category: 'MATERIALS', quantity: 10, unit: 'bags', estimatedRate: 450
     }, owner.token)).status, 403);
-    assert.equal((await request(path + '/boq', 'POST', {
+    const boqItem = await request(path + '/boq', 'POST', {
       description: 'Cement', category: 'MATERIALS', quantity: 10, unit: 'bags', estimatedRate: 450
-    }, builder.token)).status, 201);
+    }, builder.token);
+    assert.equal(boqItem.status, 201);
     const milestone = await request(path + '/milestones', 'POST', {
       title: 'Foundation', plannedEndDate: '2027-05-01', allocatedBudget: 200000
     }, builder.token);
@@ -109,18 +110,123 @@ test('accounts, project creation and membership authorization', async () => {
     assert.equal((await request(path + '/members', 'POST', {
       email: outsider.user.email, role: 'PROCUREMENT'
     }, owner.token)).status, 201);
-    for (const expected of ['ACCEPTED', 'DISPATCHED', 'DELIVERED']) {
-      const advanced = await request(path + `/material-requests/${material.body.id}/advance`, 'POST', undefined, outsider.token);
-      assert.equal(advanced.status, 200);
-      assert.equal(advanced.body.status, expected);
-    }
+    const acceptPath = path + `/material-requests/${material.body.id}/advance`;
+    assert.equal((await request(acceptPath, 'POST', undefined, outsider.token)).body.status, 'ACCEPTED');
+    assert.equal((await request(acceptPath, 'POST', undefined, outsider.token)).status, 409);
+    assert.equal((await request(path + '/vendors', 'POST', {
+      name: 'Alpha Cement'
+    }, builder.token)).status, 403);
+    const vendorA = await request(path + '/vendors', 'POST', {
+      name: 'Alpha Cement', contactName: 'Amrita', email: 'alpha@example.test'
+    }, outsider.token);
+    const vendorB = await request(path + '/vendors', 'POST', {
+      name: 'Beta Supply', email: 'beta@example.test'
+    }, outsider.token);
+    assert.equal(vendorA.status, 201);
+    assert.equal(vendorB.status, 201);
+    const quotePath = path + `/material-requests/${material.body.id}/quotations`;
+    const quoteA = await request(quotePath, 'POST', {
+      vendorId: vendorA.body.id, unitPrice: 400, leadTimeDays: 4
+    }, outsider.token);
+    assert.equal(quoteA.status, 201);
+    assert.equal((await request(quotePath, 'POST', {
+      vendorId: vendorB.body.id, unitPrice: 430, leadTimeDays: 2
+    }, outsider.token)).status, 201);
+    assert.deepEqual((await request(quotePath, 'GET', undefined, owner.token)).body.map(q => q.vendor.name),
+      ['Alpha Cement', 'Beta Supply']);
+    const order = await request(path + `/material-requests/${material.body.id}/purchase-order`, 'POST', {
+      quotationId: quoteA.body.id
+    }, outsider.token);
+    assert.equal(order.status, 201, JSON.stringify(order.body));
+    assert.equal((await request(path + `/material-requests/${material.body.id}/purchase-order`, 'POST', {
+      quotationId: quoteA.body.id
+    }, outsider.token)).status, 409);
+    assert.equal((await request(path + `/purchase-orders/${order.body.id}/dispatch`, 'POST', {
+      trackingReference: 'TRK-1'
+    }, builder.token)).status, 403);
+    assert.equal((await request(path + `/purchase-orders/${order.body.id}/dispatch`, 'POST', {
+      trackingReference: 'TRK-1'
+    }, outsider.token)).body.status, 'DISPATCHED');
+    assert.equal((await request(path + `/purchase-orders/${order.body.id}/dispatch`, 'POST', {
+      trackingReference: 'TRK-1'
+    }, outsider.token)).status, 409);
+    assert.equal((await request(path + `/purchase-orders/${order.body.id}/receipts`, 'POST', {
+      acceptedQuantity: 5, damagedQuantity: 0, finalDelivery: false, evidenceReference: 'site-photo-1'
+    }, outsider.token)).status, 403);
+    assert.equal((await request(path + `/purchase-orders/${order.body.id}/receipts`, 'POST', {
+      acceptedQuantity: 5, damagedQuantity: 0, finalDelivery: false, evidenceReference: 'site-photo-1'
+    }, builder.token)).status, 201);
+    assert.equal((await request(path + `/purchase-orders/${order.body.id}/receipts`, 'POST', {
+      acceptedQuantity: 6, damagedQuantity: 0, finalDelivery: true, evidenceReference: 'site-photo-2'
+    }, builder.token)).status, 400);
+    assert.equal((await request(path + `/purchase-orders/${order.body.id}/receipts`, 'POST', {
+      acceptedQuantity: 5, damagedQuantity: 0, finalDelivery: true, evidenceReference: 'site-photo-3'
+    }, builder.token)).status, 201);
+    const delivered = (await request(path + '/purchase-orders', 'GET', undefined, owner.token)).body[0];
+    assert.equal(delivered.status, 'RECEIVED');
+    assert.equal(delivered.receipts.length, 2);
+    assert.equal((await request(path + '/material-requests', 'GET', undefined, owner.token)).body[0].status, 'DELIVERED');
+    const summary = (await request(path + '/procurement-summary', 'GET', undefined, owner.token)).body;
+    assert.equal(Number(summary.committed), 4000);
+    assert.equal(Number(summary.receivedValue), 4000);
+
+    const exceptionRequest = await request(path + '/material-requests', 'POST', {
+      itemName: 'Tiles', quantity: 10, unit: 'boxes'
+    }, builder.token);
+    assert.equal(exceptionRequest.status, 201);
+    assert.equal((await request(path + `/material-requests/${exceptionRequest.body.id}/advance`,
+      'POST', undefined, outsider.token)).status, 200);
+    const exceptionQuote = await request(path + `/material-requests/${exceptionRequest.body.id}/quotations`,
+      'POST', { vendorId: vendorA.body.id, unitPrice: 300, leadTimeDays: 3 }, outsider.token);
+    const exceptionOrder = await request(path + `/material-requests/${exceptionRequest.body.id}/purchase-order`,
+      'POST', { quotationId: exceptionQuote.body.id }, outsider.token);
+    assert.equal(exceptionOrder.status, 201);
+    assert.equal((await request(path + `/purchase-orders/${exceptionOrder.body.id}/dispatch`, 'POST',
+      { trackingReference: 'TRK-2' }, outsider.token)).status, 200);
+    assert.equal((await request(path + `/purchase-orders/${exceptionOrder.body.id}/receipts`, 'POST', {
+      acceptedQuantity: 8, damagedQuantity: 2, finalDelivery: true,
+      evidenceReference: 'damage-photo-1', notes: 'Two boxes damaged'
+    }, builder.token)).status, 201);
+    assert.equal((await request(path + '/procurement-summary', 'GET', undefined, owner.token)).body.exceptions, 1);
+    assert.equal((await request(path + '/purchase-orders', 'GET', undefined, owner.token)).body
+      .find(p => p.id === exceptionOrder.body.id).status, 'EXCEPTION');
+    const linked = await request(path + '/material-requests', 'POST', {
+      boqItemId: boqItem.body.id, quantity: 10, neededBy: '2027-06-01'
+    }, builder.token);
+    assert.equal(linked.status, 201);
+    assert.equal(linked.body.itemName, 'Cement');
+    assert.equal(linked.body.unit, 'bags');
+    assert.equal((await request(path + '/material-requests', 'POST', {
+      boqItemId: boqItem.body.id, quantity: 10
+    }, builder.token)).status, 409);
+    assert.equal((await request(path + '/material-requests', 'POST', {
+      boqItemId: boqItem.body.id, quantity: 11
+    }, builder.token)).status, 400);
+    const expensive = await request(path + '/material-requests', 'POST', {
+      itemName: 'Steel', quantity: 10000, unit: 'kg'
+    }, builder.token);
+    assert.equal(expensive.status, 201);
+    assert.equal((await request(path + `/material-requests/${expensive.body.id}/advance`,
+      'POST', undefined, outsider.token)).status, 200);
+    const expensiveQuote = await request(path + `/material-requests/${expensive.body.id}/quotations`,
+      'POST', { vendorId: vendorA.body.id, unitPrice: 200, leadTimeDays: 1 }, outsider.token);
+    assert.equal(expensiveQuote.status, 201);
+    assert.equal((await request(path + `/material-requests/${expensive.body.id}/purchase-order`,
+      'POST', { quotationId: expensiveQuote.body.id }, outsider.token)).status, 409);
+    assert.equal((await request(path + '/procurement-summary', 'GET', undefined, owner.token)).body.committed, '7000');
     assert.equal((await request(path + `/material-requests/${material.body.id}/advance`, 'POST', undefined, outsider.token)).status, 409);
     assert.equal((await request(path + '/documents', 'POST', {
       title: 'Drawing', category: 'PLAN', storageKey: 'drawing-001'
     }, outsider.token)).status, 201);
     assert.ok((await request(path + '/activity', 'GET', undefined, owner.token)).body.length >= 10);
   } finally {
-    if (projectId) await prisma.project.delete({ where: { id: projectId } });
+    if (projectId) {
+      await prisma.goodsReceipt.deleteMany({ where: { projectId } });
+      await prisma.purchaseOrder.deleteMany({ where: { projectId } });
+      await prisma.quotation.deleteMany({ where: { projectId } });
+      await prisma.vendor.deleteMany({ where: { projectId } });
+      await prisma.project.delete({ where: { id: projectId } });
+    }
     await prisma.auditEvent.deleteMany({ where: { actorId: { in: ids } } });
     await prisma.user.deleteMany({ where: { id: { in: ids } } });
     await new Promise(resolve => server.close(resolve));

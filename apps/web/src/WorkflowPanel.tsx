@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from './api/client';
 import type { UserRole } from './types';
+import { ProcurementPanel } from './ProcurementPanel';
 
 type Item = Record<string, any> & { id: string; status?: string };
 type Field = { key: string; label: string; type?: string; options?: string[] };
@@ -36,9 +37,7 @@ const workflows: Record<string, Workflow> = {
     fields: [{ key: 'title', label: 'Defect title' }, { key: 'description', label: 'Description' },
       { key: 'severity', label: 'Severity', options: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] }],
     title: item => item.title, detail: item => `${item.severity} · ${item.description}` },
-  materials: { label: 'Materials', path: 'material-requests', canCreate: ['BUILDER', 'ADMIN'],
-    fields: [{ key: 'itemName', label: 'Material' }, { key: 'quantity', label: 'Quantity', type: 'number' },
-      { key: 'unit', label: 'Unit' }],
+  materials: { label: 'Materials', path: 'material-requests', canCreate: [], fields: [],
     title: item => item.itemName, detail: item => `${item.quantity} ${item.unit}` },
   documents: { label: 'Documents', path: 'documents', canCreate: ['HOMEOWNER', 'BUILDER', 'PROCUREMENT', 'ADMIN'],
     fields: [{ key: 'title', label: 'Document title' }, { key: 'category', label: 'Category' },
@@ -58,7 +57,7 @@ export function WorkflowPanel({ projectId, role, onProjectChange }: {
   const [busy, setBusy] = useState(false);
   const workflow = workflows[tab];
   const base = `/projects/${projectId}/${workflow.path}`;
-  const reload = async () => { setItems(await apiFetch<Item[]>(base)); };
+  const reload = async () => { if (tab !== 'materials') setItems(await apiFetch<Item[]>(base)); };
   useEffect(() => {
     setItems([]); setError(''); setForm({});
     reload().catch(reason => setError(reason.message));
@@ -94,10 +93,6 @@ export function WorkflowPanel({ projectId, role, onProjectChange }: {
       return <button disabled={busy} onClick={() => act(`defects/${item.id}/resolve`)}>Mark resolved</button>;
     if (tab === 'defects' && (role === 'HOMEOWNER' || role === 'ADMIN') && item.status === 'RESOLVED')
       return <button disabled={busy} onClick={() => act(`defects/${item.id}/verify`)}>Verify closure</button>;
-    if (tab === 'materials' && (role === 'PROCUREMENT' || role === 'ADMIN') && item.status !== 'DELIVERED')
-      return <button disabled={busy} onClick={() => act(`material-requests/${item.id}/advance`)}>
-        {item.status === 'REQUESTED' ? 'Accept' : item.status === 'ACCEPTED' ? 'Mark dispatched' : 'Mark delivered'}
-      </button>;
     return null;
   };
 
@@ -107,6 +102,7 @@ export function WorkflowPanel({ projectId, role, onProjectChange }: {
         className={'rounded-lg px-3 py-2 text-sm font-semibold ' + (tab === key ? 'bg-blue-700 text-white' : 'bg-slate-100 text-slate-700')}
         onClick={() => setTab(key)}>{value.label}</button>)}
     </div>
+    {tab === 'materials' ? <ProcurementPanel projectId={projectId} role={role} onProjectChange={onProjectChange} /> : <>
     <h3 className="mt-5 text-lg font-bold">{workflow.label}</h3>
     {error && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     {workflow.canCreate.includes(role) && <form onSubmit={create} className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -134,5 +130,6 @@ export function WorkflowPanel({ projectId, role, onProjectChange }: {
       </article>)}
       {!items.length && <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">No records yet.</p>}
     </div>
+    </>}
   </section>;
 }
