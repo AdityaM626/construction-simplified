@@ -26,4 +26,6 @@ Set `DATABASE_URL` to PostgreSQL and `JWT_SECRET` to a secret of at least 32 cha
 
 The `packages/db` JSON seed remains as reference data but is not used by the live API. See [Sprint 2 accounts and membership](docs/sprint-2-auth-membership.md) for account setup and administrator provisioning.
 
+The [Sprint 3 workflow guide](docs/sprint-3-project-workflows.md) lists each role's project actions and the limits of document references and milestone approval.
+
 See [Sprint 0 foundation](docs/sprint-0-foundation.md) for the current boundaries and remaining work.

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { api } from './api/client';
 import type { UserRole } from './types';
+import { WorkflowPanel } from './WorkflowPanel';
 
 type ProjectSummary = {
   id: string; name: string; type: string; location: string; status: string;
@@ -131,6 +132,7 @@ function Workspace() {
               <button className={button} disabled={busy}>Add member</button>
             </form>}
         </section>}
+        {selected && currentUser && <WorkflowPanel projectId={selected.id} role={currentUser.role} onProjectChange={refresh} />}
         {(currentUser?.role === 'HOMEOWNER' || currentUser?.role === 'ADMIN') && <section className="rounded-2xl bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold">Start a project</h2>
           <form onSubmit={createProject} className="mt-4 grid gap-3 sm:grid-cols-2">

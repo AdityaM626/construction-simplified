@@ -61,6 +61,66 @@ test('accounts, project creation and membership authorization', async () => {
       name: 'Forbidden', type: 'RENOVATION', location: 'Bengaluru',
       totalBudget: 100, targetCompletionDate: '2027-12-31'
     }, builder.token)).status, 403);
+
+    const path = `/api/projects/${projectId}`;
+    assert.equal((await request(path + '/boq', 'POST', {
+      description: 'Cement', category: 'MATERIALS', quantity: 10, unit: 'bags', estimatedRate: 450
+    }, owner.token)).status, 403);
+    assert.equal((await request(path + '/boq', 'POST', {
+      description: 'Cement', category: 'MATERIALS', quantity: 10, unit: 'bags', estimatedRate: 450
+    }, builder.token)).status, 201);
+    const milestone = await request(path + '/milestones', 'POST', {
+      title: 'Foundation', plannedEndDate: '2027-05-01', allocatedBudget: 200000
+    }, builder.token);
+    assert.equal(milestone.status, 201);
+    assert.equal((await request(path + `/milestones/${milestone.body.id}/approve`, 'POST', undefined, owner.token)).status, 409);
+    assert.equal((await request(path + `/milestones/${milestone.body.id}/submit`, 'POST', undefined, builder.token)).status, 200);
+    assert.equal((await request(path + `/milestones/${milestone.body.id}/approve`, 'POST', undefined, owner.token)).status, 200);
+
+    const change = await request(path + '/change-orders', 'POST', {
+      title: 'Add room', description: 'Increase floor area', costImpact: 100000, timelineImpactDays: 14
+    }, builder.token);
+    assert.equal(change.status, 201);
+    assert.equal((await request(path + `/change-orders/${change.body.id}/decision`, 'POST', {
+      decision: 'APPROVED'
+    }, builder.token)).status, 403);
+    assert.equal((await request(path + `/change-orders/${change.body.id}/decision`, 'POST', {
+      decision: 'APPROVED'
+    }, owner.token)).status, 200);
+    assert.equal((await request(path + `/change-orders/${change.body.id}/decision`, 'POST', {
+      decision: 'APPROVED'
+    }, owner.token)).status, 409);
+    assert.equal(Number((await request(path, 'GET', undefined, owner.token)).body.totalBudget), 1100000);
+
+    assert.equal((await request(path + '/site-reports', 'POST', {
+      reportDate: '2027-05-02', workCompleted: 'Foundation poured'
+    }, builder.token)).status, 201);
+    const defect = await request(path + '/defects', 'POST', {
+      title: 'Crack', description: 'Hairline crack on wall', severity: 'MEDIUM'
+    }, owner.token);
+    assert.equal(defect.status, 201);
+    assert.equal((await request(path + `/defects/${defect.body.id}/verify`, 'POST', undefined, owner.token)).status, 409);
+    assert.equal((await request(path + `/defects/${defect.body.id}/resolve`, 'POST', undefined, builder.token)).status, 200);
+    assert.equal((await request(path + `/defects/${defect.body.id}/verify`, 'POST', undefined, owner.token)).status, 200);
+
+    const material = await request(path + '/material-requests', 'POST', {
+      itemName: 'Cement', quantity: 10, unit: 'bags'
+    }, builder.token);
+    assert.equal(material.status, 201);
+    assert.equal((await request(path + `/material-requests/${material.body.id}/advance`, 'POST', undefined, outsider.token)).status, 403);
+    assert.equal((await request(path + '/members', 'POST', {
+      email: outsider.user.email, role: 'PROCUREMENT'
+    }, owner.token)).status, 201);
+    for (const expected of ['ACCEPTED', 'DISPATCHED', 'DELIVERED']) {
+      const advanced = await request(path + `/material-requests/${material.body.id}/advance`, 'POST', undefined, outsider.token);
+      assert.equal(advanced.status, 200);
+      assert.equal(advanced.body.status, expected);
+    }
+    assert.equal((await request(path + `/material-requests/${material.body.id}/advance`, 'POST', undefined, outsider.token)).status, 409);
+    assert.equal((await request(path + '/documents', 'POST', {
+      title: 'Drawing', category: 'PLAN', storageKey: 'drawing-001'
+    }, outsider.token)).status, 201);
+    assert.ok((await request(path + '/activity', 'GET', undefined, owner.token)).body.length >= 10);
   } finally {
     if (projectId) await prisma.project.delete({ where: { id: projectId } });
     await prisma.auditEvent.deleteMany({ where: { actorId: { in: ids } } });

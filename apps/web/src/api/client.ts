@@ -42,36 +42,11 @@ export const api = {
     apiFetch<{ user: any; token: string }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   register: (data: any) =>
     apiFetch<{ user: any; token: string }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
-  logout: () => apiFetch('/auth/logout', { method: 'POST' }),
   getMe: () => apiFetch('/auth/me'),
 
   getProjects: () => apiFetch<any[]>('/projects'),
   createProject: (data: any) => apiFetch<any>('/projects', { method: 'POST', body: JSON.stringify(data) }),
   getProject: (id: string) => apiFetch<any>(`/projects/${id}`),
   addMember: (id: string, data: { email: string; role: string }) =>
-    apiFetch(`/projects/${id}/members`, { method: 'POST', body: JSON.stringify(data) }),
-
-  // File Storage Upload
-  uploadFile: (fileName: string, fileData: string) =>
-    apiFetch<{ fileUrl: string; fileName: string; sizeBytes: number }>('/upload', { method: 'POST', body: JSON.stringify({ fileName, fileData }) }),
-
-  // Project API
-  getHealth: (projectId: string) => apiFetch(`/projects/${projectId}/health`),
-  getBOQ: (projectId: string) => apiFetch(`/projects/${projectId}/boq`),
-  addBOQItem: (projectId: string, item: any) => apiFetch(`/projects/${projectId}/boq`, { method: 'POST', body: JSON.stringify(item) }),
-  getMilestones: (projectId: string) => apiFetch(`/projects/${projectId}/milestones`),
-  approveMilestone: (projectId: string, milestoneId: string) => apiFetch(`/projects/${projectId}/milestones/${milestoneId}/approve`, { method: 'POST' }),
-  getBudgetVsActual: (projectId: string) => apiFetch(`/projects/${projectId}/budget-vs-actual`),
-  getDailyReports: (projectId: string) => apiFetch(`/projects/${projectId}/daily-reports`),
-  submitDailyReport: (projectId: string, report: any) => apiFetch(`/projects/${projectId}/daily-reports`, { method: 'POST', body: JSON.stringify(report) }),
-  getChangeRequests: (projectId: string) => apiFetch(`/projects/${projectId}/change-requests`),
-  createChangeRequest: (projectId: string, data: any) => apiFetch(`/projects/${projectId}/change-requests`, { method: 'POST', body: JSON.stringify(data) }),
-  approveChangeRequest: (projectId: string, reqId: string) => apiFetch(`/projects/${projectId}/change-requests/${reqId}/approve`, { method: 'POST' }),
-  getDefects: (projectId: string) => apiFetch(`/projects/${projectId}/defects`),
-  createDefect: (projectId: string, data: any) => apiFetch(`/projects/${projectId}/defects`, { method: 'POST', body: JSON.stringify(data) }),
-  verifyDefect: (projectId: string, defectId: string) => apiFetch(`/projects/${projectId}/defects/${defectId}/verify`, { method: 'POST' }),
-  getDocuments: (projectId: string) => apiFetch(`/projects/${projectId}/documents`),
-  uploadDocumentRecord: (projectId: string, doc: any) => apiFetch(`/projects/${projectId}/documents`, { method: 'POST', body: JSON.stringify(doc) }),
-  getMessages: (entityType: string, entityId: string) => apiFetch(`/messages/${entityType}/${entityId}`),
-  sendMessage: (data: any) => apiFetch('/messages', { method: 'POST', body: JSON.stringify(data) })
+    apiFetch(`/projects/${id}/members`, { method: 'POST', body: JSON.stringify(data) })
 };

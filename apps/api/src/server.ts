@@ -3,6 +3,7 @@ import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { createDataClient } from '@construction-os/data';
+import { registerWorkflows } from './workflows.js';
 
 const secret = process.env.JWT_SECRET || '';
 if (secret.length < 32) throw new Error('JWT_SECRET must contain at least 32 characters');
@@ -139,6 +140,8 @@ app.post('/api/projects/:id/members', authenticate, projectAccess, route(async (
   });
   return res.status(201).json(member);
 }));
+
+registerWorkflows(app, prisma, authenticate, projectAccess);
 
 app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(error);

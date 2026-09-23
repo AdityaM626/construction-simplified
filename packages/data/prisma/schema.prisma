@@ -48,6 +48,13 @@ enum DefectStatus {
   VERIFIED_CLOSED
 }
 
+enum MaterialRequestStatus {
+  REQUESTED
+  ACCEPTED
+  DISPATCHED
+  DELIVERED
+}
+
 model User {
   id           String          @id @default(uuid()) @db.Uuid
   email        String          @unique
@@ -80,6 +87,7 @@ model Project {
   siteReports          SiteReport[]
   defects              Defect[]
   documents            ProjectDocument[]
+  materialRequests     MaterialRequest[]
   auditEvents          AuditEvent[]
 
   @@index([ownerId])
@@ -186,6 +194,22 @@ model ProjectDocument {
   createdAt    DateTime @default(now())
 
   @@index([projectId])
+}
+
+model MaterialRequest {
+  id           String                @id @default(uuid()) @db.Uuid
+  projectId    String                @db.Uuid
+  project      Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  itemName     String
+  quantity     Decimal               @db.Decimal(14, 3)
+  unit         String
+  status       MaterialRequestStatus @default(REQUESTED)
+  requestedById String               @db.Uuid
+  handledById  String?               @db.Uuid
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@index([projectId, status])
 }
 
 model AuditEvent {
