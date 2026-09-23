@@ -36,8 +36,8 @@ export const ContextualChatModal: React.FC<ContextualChatModalProps> = ({
 
     const newMsg = {
       id: `msg-${Date.now()}`,
-      senderName: currentUser.fullName,
-      senderRole: currentUser.role,
+      senderName: currentUser?.fullName || '',
+      senderRole: currentUser?.role || 'HOMEOWNER',
       content: input,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
@@ -57,7 +57,7 @@ export const ContextualChatModal: React.FC<ContextualChatModalProps> = ({
         {/* Message Stream */}
         <div className="h-64 overflow-y-auto space-y-3 p-3 bg-slate-50/50 rounded-2xl border border-slate-100">
           {messages.map((m) => {
-            const isMe = m.senderName === currentUser.fullName;
+            const isMe = m.senderName === currentUser?.fullName;
             return (
               <div key={m.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                 <div className="flex items-center space-x-1.5 text-[10px] text-slate-400 mb-0.5">

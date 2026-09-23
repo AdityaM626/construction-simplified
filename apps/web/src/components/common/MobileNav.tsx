@@ -16,7 +16,7 @@ const icons: Partial<Record<NavigationIcon, React.ElementType>> = {
 
 export const MobileNav: React.FC = () => {
   const { currentUser, activeTab, setActiveTab } = useAuth();
-  const items = navigationFor(currentUser.role).flatMap(group => group.items).filter(item => item.mobile);
+  const items = navigationFor(currentUser?.role || 'HOMEOWNER').flatMap(group => group.items).filter(item => item.mobile);
 
   return (
     <nav aria-label="Mobile workspace" className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 py-2 px-4 flex justify-around items-center shadow-lg md:hidden">

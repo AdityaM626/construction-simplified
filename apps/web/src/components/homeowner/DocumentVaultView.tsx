@@ -34,7 +34,7 @@ export const DocumentVaultView: React.FC = () => {
       category: 'INVOICE',
       fileUrl: '#',
       uploadedBy: 'UltraTech Cement Depot',
-      uploadedByRole: 'DEALER',
+      uploadedByRole: 'PROCUREMENT',
       sizeBytes: 1150000,
       uploadedAt: '2026-02-10T11:25:00.000Z'
     }

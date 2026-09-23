@@ -27,8 +27,8 @@ const icons: Record<NavigationIcon, React.ElementType> = {
 
 export const Sidebar: React.FC = () => {
   const { currentUser, activeTab, setActiveTab } = useAuth();
-  const isBuilder = currentUser.role === 'BUILDER';
-  const groups = navigationFor(currentUser.role);
+  const isBuilder = currentUser?.role === 'BUILDER';
+  const groups = navigationFor(currentUser?.role || 'HOMEOWNER');
 
   return (
     <aside className={`w-64 min-h-[calc(100vh-4rem)] p-6 hidden md:block border-r ${
@@ -38,9 +38,9 @@ export const Sidebar: React.FC = () => {
         isBuilder ? 'bg-slate-800/90 border-slate-700 text-white' : 'bg-white border-slate-100 text-slate-900'
       }`}>
         <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider block">Active workspace</span>
-        <p className="text-xs font-bold truncate mt-0.5">{currentUser.fullName}</p>
+        <p className="text-xs font-bold truncate mt-0.5">{currentUser?.fullName}</p>
         <span className={`text-[11px] font-semibold block mt-0.5 ${isBuilder ? 'text-amber-400' : 'text-blue-600'}`}>
-          {isBuilder ? 'Builder / contractor' : currentUser.role === 'ADMIN' ? 'Platform admin' : 'Homeowner'}
+          {isBuilder ? 'Builder / contractor' : currentUser?.role === 'ADMIN' ? 'Platform admin' : 'Homeowner'}
         </span>
       </div>
 
