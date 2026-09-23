@@ -30,4 +30,6 @@ The [Sprint 3 workflow guide](docs/sprint-3-project-workflows.md) lists each rol
 
 The [Sprint 4 procurement guide](docs/sprint-4-procurement-logistics.md) covers supplier quotations, purchase orders, dispatch, site receipts, budget commitments and exception handling.
 
+The [Sprint 5 workspace guide](docs/sprint-5-workspace-ux.md) explains the live role-aware overview and action queues.
+
 See [Sprint 0 foundation](docs/sprint-0-foundation.md) for the current boundaries and remaining work.

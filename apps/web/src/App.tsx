@@ -132,7 +132,8 @@ function Workspace() {
               <button className={button} disabled={busy}>Add member</button>
             </form>}
         </section>}
-        {selected && currentUser && <WorkflowPanel projectId={selected.id} role={currentUser.role} onProjectChange={refresh} />}
+        {selected && currentUser && <WorkflowPanel key={selected.id} projectId={selected.id}
+          role={currentUser.role} onProjectChange={refresh} />}
         {(currentUser?.role === 'HOMEOWNER' || currentUser?.role === 'ADMIN') && <section className="rounded-2xl bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold">Start a project</h2>
           <form onSubmit={createProject} className="mt-4 grid gap-3 sm:grid-cols-2">

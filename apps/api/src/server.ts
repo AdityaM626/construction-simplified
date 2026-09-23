@@ -5,6 +5,7 @@ import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { createDataClient } from '@construction-os/data';
 import { registerWorkflows } from './workflows.js';
 import { registerProcurement } from './procurement.js';
+import { registerOverview } from './overview.js';
 
 const secret = process.env.JWT_SECRET || '';
 if (secret.length < 32) throw new Error('JWT_SECRET must contain at least 32 characters');
@@ -144,6 +145,7 @@ app.post('/api/projects/:id/members', authenticate, projectAccess, route(async (
 
 registerWorkflows(app, prisma, authenticate, projectAccess);
 registerProcurement(app, prisma, authenticate, projectAccess);
+registerOverview(app, prisma, authenticate, projectAccess);
 
 app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {
   if ('code' in error && error.code === 'P2002') {
