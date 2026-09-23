@@ -9,10 +9,12 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
-    "build": "npm run build --workspace=@construction-os/types && npm run build --workspace=@construction-os/db && npm run build --workspace=@construction-os/api && npm run build --workspace=@construction-os/web",
+    "build": "npm run build --workspace=@construction-os/types && npm run build --workspace=@construction-os/db && npm run build --workspace=@construction-os/data && npm run build --workspace=@construction-os/api && npm run build --workspace=@construction-os/web",
     "db:seed": "npm run seed --workspace=packages/db",
     "test": "node scripts/test-system.js && node scripts/test-project-access.cjs",
-    "typecheck": "npm run build --workspace=@construction-os/types && npm run build --workspace=@construction-os/db && npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run build --workspace=@construction-os/types && npm run build --workspace=@construction-os/db && npm run build --workspace=@construction-os/data && npm run typecheck --workspaces --if-present",
+    "db:validate": "npm run validate --workspace=@construction-os/data",
+    "db:migrate": "npm run migrate:deploy --workspace=@construction-os/data",
     "pretest": "npm run build"
   },
   "devDependencies": {
