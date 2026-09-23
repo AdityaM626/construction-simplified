@@ -13,6 +13,22 @@ permissions:
 jobs:
   foundation:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://construction:construction@localhost:5432/construction_ci?schema=public
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: construction
+          POSTGRES_PASSWORD: construction
+          POSTGRES_DB: construction_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U construction -d construction_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,5 +36,7 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - run: npm run db:validate
+      - run: npm run db:migrate
       - run: npm run typecheck
       - run: npm test
