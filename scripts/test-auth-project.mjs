@@ -84,12 +84,10 @@ test('accounts, project creation and membership authorization', async () => {
     assert.equal((await request(path + `/change-orders/${change.body.id}/decision`, 'POST', {
       decision: 'APPROVED'
     }, builder.token)).status, 403);
-    assert.equal((await request(path + `/change-orders/${change.body.id}/decision`, 'POST', {
-      decision: 'APPROVED'
-    }, owner.token)).status, 200);
-    assert.equal((await request(path + `/change-orders/${change.body.id}/decision`, 'POST', {
-      decision: 'APPROVED'
-    }, owner.token)).status, 409);
+    const decisions = await Promise.all([1, 2].map(() => request(
+      path + `/change-orders/${change.body.id}/decision`, 'POST', { decision: 'APPROVED' }, owner.token
+    )));
+    assert.deepEqual(decisions.map(result => result.status).sort(), [200, 409]);
     assert.equal(Number((await request(path, 'GET', undefined, owner.token)).body.totalBudget), 1100000);
 
     assert.equal((await request(path + '/site-reports', 'POST', {

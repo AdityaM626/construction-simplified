@@ -66,7 +66,11 @@ export function registerWorkflows(
     const milestone = await prisma.milestone.findFirst({ where: { id: req.params.milestoneId, projectId: req.params.id } });
     if (!milestone) return res.status(404).json({ error: 'Milestone not found' });
     if (milestone.status !== 'NOT_STARTED' && milestone.status !== 'IN_PROGRESS') return res.status(409).json({ error: 'Milestone cannot be submitted again' });
-    const updated = await prisma.milestone.update({ where: { id: milestone.id }, data: { status: 'AWAITING_APPROVAL', completedAt: new Date() } });
+    const changed = await prisma.milestone.updateMany({ where: {
+      id: milestone.id, projectId: req.params.id, status: { in: ['NOT_STARTED', 'IN_PROGRESS'] }
+    }, data: { status: 'AWAITING_APPROVAL', completedAt: new Date() } });
+    if (changed.count !== 1) return res.status(409).json({ error: 'Milestone was already submitted' });
+    const updated = await prisma.milestone.findUniqueOrThrow({ where: { id: milestone.id } });
     await audit(req.params.id, req.account!.id, 'MILESTONE_SUBMITTED', milestone.id);
     return res.json(updated);
   }));
@@ -75,7 +79,11 @@ export function registerWorkflows(
     const milestone = await prisma.milestone.findFirst({ where: { id: req.params.milestoneId, projectId: req.params.id } });
     if (!milestone) return res.status(404).json({ error: 'Milestone not found' });
     if (milestone.status !== 'AWAITING_APPROVAL') return res.status(409).json({ error: 'Milestone is not awaiting approval' });
-    const updated = await prisma.milestone.update({ where: { id: milestone.id }, data: { status: 'COMPLETED', approvedAt: new Date() } });
+    const changed = await prisma.milestone.updateMany({ where: {
+      id: milestone.id, projectId: req.params.id, status: 'AWAITING_APPROVAL'
+    }, data: { status: 'COMPLETED', approvedAt: new Date() } });
+    if (changed.count !== 1) return res.status(409).json({ error: 'Milestone was already approved' });
+    const updated = await prisma.milestone.findUniqueOrThrow({ where: { id: milestone.id } });
     await audit(req.params.id, req.account!.id, 'MILESTONE_APPROVED', milestone.id);
     return res.json(updated);
   }));
@@ -104,21 +112,31 @@ export function registerWorkflows(
     const order = await prisma.changeOrder.findFirst({ where: { id: req.params.orderId, projectId: req.params.id } });
     if (!order) return res.status(404).json({ error: 'Change order not found' });
     if (order.status !== 'PENDING') return res.status(409).json({ error: 'Change order already decided' });
-    const project = await prisma.project.findUniqueOrThrow({ where: { id: req.params.id } });
-    if (decision === 'APPROVED' && Number(project.totalBudget) + Number(order.costImpact) <= 0) {
-      return res.status(400).json({ error: 'Budget must remain positive' });
+    class DecisionConflict extends Error { constructor(public status: number, message: string) { super(message); } }
+    try {
+      const updated = await prisma.$transaction(async tx => {
+        const changed = await tx.changeOrder.updateMany({ where: {
+          id: order.id, projectId: req.params.id, status: 'PENDING'
+        }, data: { status: decision, approvedById: req.account!.id, decidedAt: new Date() } });
+        if (changed.count !== 1) throw new DecisionConflict(409, 'Change order already decided');
+        if (decision === 'APPROVED') {
+          const budget = await tx.project.updateMany({ where: {
+            id: req.params.id, totalBudget: { gt: -Number(order.costImpact) }
+          }, data: { totalBudget: { increment: order.costImpact } } });
+          if (budget.count !== 1) throw new DecisionConflict(400, 'Budget must remain positive');
+        }
+        await tx.auditEvent.create({ data: { projectId: req.params.id, actorId: req.account!.id,
+          action: `CHANGE_ORDER_${decision}`, entityId: order.id } });
+        return tx.changeOrder.findUniqueOrThrow({ where: { id: order.id } });
+      });
+      return res.json(updated);
+    } catch (error) {
+      if (error instanceof DecisionConflict) return res.status(error.status).json({ error: error.message });
+      if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2034') {
+        return res.status(409).json({ error: 'Concurrent decision; refresh and try again' });
+      }
+      throw error;
     }
-    const updated = await prisma.$transaction(async tx => {
-      const changed = await tx.changeOrder.update({ where: { id: order.id }, data: {
-        status: decision, approvedById: req.account!.id, decidedAt: new Date()
-      } });
-      if (decision === 'APPROVED') await tx.project.update({ where: { id: project.id }, data: {
-        totalBudget: { increment: order.costImpact }
-      } });
-      await tx.auditEvent.create({ data: { projectId: project.id, actorId: req.account!.id, action: `CHANGE_ORDER_${decision}`, entityId: order.id } });
-      return changed;
-    });
-    return res.json(updated);
   }));
 
   app.get('/api/projects/:id/site-reports', authenticate, projectAccess, route(async (req, res) => {
@@ -159,7 +177,11 @@ export function registerWorkflows(
     const defect = await prisma.defect.findFirst({ where: { id: req.params.defectId, projectId: req.params.id } });
     if (!defect) return res.status(404).json({ error: 'Defect not found' });
     if (defect.status !== 'OPEN' && defect.status !== 'IN_PROGRESS') return res.status(409).json({ error: 'Defect cannot be resolved again' });
-    const updated = await prisma.defect.update({ where: { id: defect.id }, data: { status: 'RESOLVED', resolvedAt: new Date() } });
+    const changed = await prisma.defect.updateMany({ where: {
+      id: defect.id, projectId: req.params.id, status: { in: ['OPEN', 'IN_PROGRESS'] }
+    }, data: { status: 'RESOLVED', resolvedAt: new Date() } });
+    if (changed.count !== 1) return res.status(409).json({ error: 'Defect was already resolved' });
+    const updated = await prisma.defect.findUniqueOrThrow({ where: { id: defect.id } });
     await audit(req.params.id, req.account!.id, 'DEFECT_RESOLVED', defect.id);
     return res.json(updated);
   }));
@@ -168,7 +190,11 @@ export function registerWorkflows(
     const defect = await prisma.defect.findFirst({ where: { id: req.params.defectId, projectId: req.params.id } });
     if (!defect) return res.status(404).json({ error: 'Defect not found' });
     if (defect.status !== 'RESOLVED') return res.status(409).json({ error: 'Defect must be resolved before verification' });
-    const updated = await prisma.defect.update({ where: { id: defect.id }, data: { status: 'VERIFIED_CLOSED', verifiedById: req.account!.id } });
+    const changed = await prisma.defect.updateMany({ where: {
+      id: defect.id, projectId: req.params.id, status: 'RESOLVED'
+    }, data: { status: 'VERIFIED_CLOSED', verifiedById: req.account!.id } });
+    if (changed.count !== 1) return res.status(409).json({ error: 'Defect was already verified' });
+    const updated = await prisma.defect.findUniqueOrThrow({ where: { id: defect.id } });
     await audit(req.params.id, req.account!.id, 'DEFECT_VERIFIED', defect.id);
     return res.json(updated);
   }));
@@ -194,9 +220,11 @@ export function registerWorkflows(
     if (!request) return res.status(404).json({ error: 'Material request not found' });
     const next = { REQUESTED: 'ACCEPTED', ACCEPTED: 'DISPATCHED', DISPATCHED: 'DELIVERED' } as const;
     if (request.status === 'DELIVERED') return res.status(409).json({ error: 'Request already delivered' });
-    const updated = await prisma.materialRequest.update({ where: { id: request.id }, data: {
-      status: next[request.status], handledById: req.account!.id
-    } });
+    const changed = await prisma.materialRequest.updateMany({ where: {
+      id: request.id, projectId: req.params.id, status: request.status
+    }, data: { status: next[request.status], handledById: req.account!.id } });
+    if (changed.count !== 1) return res.status(409).json({ error: 'Material request has advanced; refresh it' });
+    const updated = await prisma.materialRequest.findUniqueOrThrow({ where: { id: request.id } });
     await audit(req.params.id, req.account!.id, `MATERIAL_${updated.status}`, request.id);
     return res.json(updated);
   }));
