@@ -49,6 +49,7 @@ test('accounts, project creation and membership authorization', async () => {
     assert.equal(created.status, 201, JSON.stringify(created.body));
     projectId = created.body.id;
     assert.equal((await request(`/api/projects/${projectId}`, 'GET', undefined, outsider.token)).status, 403);
+    assert.equal((await request(`/api/projects/${projectId}/workspace-overview`, 'GET', undefined, outsider.token)).status, 403);
     assert.equal((await request(`/api/projects/${projectId}/members`, 'POST', {
       email: builder.user.email, role: 'BUILDER'
     }, owner.token)).status, 201);
@@ -214,6 +215,18 @@ test('accounts, project creation and membership authorization', async () => {
     assert.equal((await request(path + `/material-requests/${expensive.body.id}/purchase-order`,
       'POST', { quotationId: expensiveQuote.body.id }, outsider.token)).status, 409);
     assert.equal((await request(path + '/procurement-summary', 'GET', undefined, owner.token)).body.committed, '7000');
+    const homeownerOverview = await request(path + '/workspace-overview', 'GET', undefined, owner.token);
+    const builderOverview = await request(path + '/workspace-overview', 'GET', undefined, builder.token);
+    const procurementOverview = await request(path + '/workspace-overview', 'GET', undefined, outsider.token);
+    assert.equal(homeownerOverview.status, 200);
+    assert.equal(homeownerOverview.body.metrics.boqItems, 1);
+    assert.equal(homeownerOverview.body.metrics.completedMilestones, 1);
+    assert.equal(homeownerOverview.body.metrics.committed, '7000');
+    assert.ok(homeownerOverview.body.recentActivity.length > 0);
+    assert.deepEqual(homeownerOverview.body.attention.map(item => item.key), ['delivery-exceptions']);
+    assert.deepEqual(builderOverview.body.attention.map(item => item.key), ['delivery-exceptions']);
+    assert.deepEqual(procurementOverview.body.attention.map(item => item.key),
+      ['material-acceptance', 'material-sourcing', 'delivery-exceptions']);
     assert.equal((await request(path + `/material-requests/${material.body.id}/advance`, 'POST', undefined, outsider.token)).status, 409);
     assert.equal((await request(path + '/documents', 'POST', {
       title: 'Drawing', category: 'PLAN', storageKey: 'drawing-001'

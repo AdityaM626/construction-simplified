@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { apiFetch } from './api/client';
 import type { UserRole } from './types';
 import { ProcurementPanel } from './ProcurementPanel';
+import { WorkspaceOverview } from './WorkspaceOverview';
 
 type Item = Record<string, any> & { id: string; status?: string };
 type Field = { key: string; label: string; type?: string; options?: string[] };
@@ -50,18 +51,25 @@ const workflows: Record<string, Workflow> = {
 export function WorkflowPanel({ projectId, role, onProjectChange }: {
   projectId: string; role: UserRole; onProjectChange: () => Promise<void>;
 }) {
-  const [tab, setTab] = useState('boq');
+  const [tab, setTab] = useState('overview');
   const [items, setItems] = useState<Item[]>([]);
   const [form, setForm] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const workflow = workflows[tab];
+  const workflow = workflows[tab] || workflows.boq;
   const base = `/projects/${projectId}/${workflow.path}`;
-  const reload = async () => { if (tab !== 'materials') setItems(await apiFetch<Item[]>(base)); };
+  const reload = async () => { if (tab !== 'materials' && tab !== 'overview') setItems(await apiFetch<Item[]>(base)); };
   useEffect(() => {
     setItems([]); setError(''); setForm({});
     reload().catch(reason => setError(reason.message));
   }, [projectId, tab]);
+  const tabOrder = role === 'HOMEOWNER'
+    ? ['overview', 'milestones', 'changes', 'defects', 'materials', 'reports', 'documents', 'boq', 'activity']
+    : role === 'BUILDER'
+      ? ['overview', 'reports', 'milestones', 'defects', 'boq', 'materials', 'changes', 'documents', 'activity']
+      : role === 'PROCUREMENT'
+        ? ['overview', 'materials', 'boq', 'milestones', 'reports', 'documents', 'changes', 'defects', 'activity']
+        : ['overview', ...Object.keys(workflows)];
 
   const create = async (event: React.FormEvent) => {
     event.preventDefault(); setBusy(true); setError('');
@@ -97,12 +105,13 @@ export function WorkflowPanel({ projectId, role, onProjectChange }: {
   };
 
   return <section className="rounded-2xl bg-white p-6 shadow-sm">
-    <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-4" role="tablist" aria-label="Project workflows">
-      {Object.entries(workflows).map(([key, value]) => <button key={key} role="tab" aria-selected={tab === key}
+    <nav className="flex flex-wrap gap-2 border-b border-slate-200 pb-4" aria-label="Project workflows">
+      {tabOrder.map(key => <button key={key} aria-pressed={tab === key}
         className={'rounded-lg px-3 py-2 text-sm font-semibold ' + (tab === key ? 'bg-blue-700 text-white' : 'bg-slate-100 text-slate-700')}
-        onClick={() => setTab(key)}>{value.label}</button>)}
-    </div>
-    {tab === 'materials' ? <ProcurementPanel projectId={projectId} role={role} onProjectChange={onProjectChange} /> : <>
+        onClick={() => setTab(key)}>{key === 'overview' ? 'Overview' : workflows[key].label}</button>)}
+    </nav>
+    {tab === 'overview' ? <WorkspaceOverview projectId={projectId} role={role} onOpen={setTab} /> :
+      tab === 'materials' ? <ProcurementPanel projectId={projectId} role={role} onProjectChange={onProjectChange} /> : <>
     <h3 className="mt-5 text-lg font-bold">{workflow.label}</h3>
     {error && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     {workflow.canCreate.includes(role) && <form onSubmit={create} className="mt-4 grid gap-3 sm:grid-cols-2">
