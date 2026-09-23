@@ -23,4 +23,6 @@ npm run dev --workspace=@construction-os/web
 
 The API defaults to port 4000. The database package uses seeded local JSON and writes `persisted_db.json` outside its compiled output.
 
+Sprint 1 adds the PostgreSQL schema and migrations in `packages/data`. Set `DATABASE_URL` and run `npm run db:migrate` to apply the schema. The existing API still uses the demo JSON store until the Sprint 2 cutover.
+
 See [Sprint 0 foundation](docs/sprint-0-foundation.md) for the current boundaries and remaining work.
