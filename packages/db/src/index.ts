@@ -24,7 +24,7 @@ import {
   UserRole
 } from '@construction-os/types';
 
-const DB_FILE_PATH = path.join(__dirname, 'persisted_db.json');
+const DB_FILE_PATH = path.join(__dirname, '..', 'persisted_db.json');
 
 class ConstructionDatabase {
   public users: User[] = [];

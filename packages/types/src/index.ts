@@ -1,3 +1,7 @@
+/** Product personas; procurement access is planned, not yet an authentication role. */
+export type ProductPersona = 'HOMEOWNER' | 'BUILDER' | 'PROCUREMENT' | 'ADMIN';
+
+/** Legacy demo authentication roles. DEALER remains until the Sprint 2 migration. */
 export type UserRole = 'HOMEOWNER' | 'BUILDER' | 'ADMIN' | 'DEALER';
 
 export type ConstructionTeamRole = 
