@@ -184,6 +184,14 @@ try {
   process.exitCode = 1;
 } finally {
   await browser?.close();
-  api.child.kill();
-  web.child.kill();
+  for (const service of [api, web]) {
+    service.child.kill();
+    service.child.stdout?.destroy();
+    service.child.stderr?.destroy();
+  }
+  // The web server may leave a child process behind after its npm wrapper exits.
+  // The browser assertions are complete, so finish this CI-only runner explicitly.
+  await new Promise(resolve => setTimeout(resolve, 200));
+  process.exit(process.exitCode || 0);
 }
+
