@@ -44,6 +44,7 @@ jobs:
           npm install --no-save --package-lock=false playwright@1.62.1
           npx playwright install --with-deps chromium
       - name: Exercise the four-persona browser flow
+        timeout-minutes: 5
         run: node scripts/test-browser-flow.mjs
       - uses: actions/upload-artifact@v4
         if: always()

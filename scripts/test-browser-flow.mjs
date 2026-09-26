@@ -31,7 +31,7 @@ const server = (command, args, extraEnv = {}) => {
 async function ready(url, processInfo) {
   for (let attempt = 0; attempt < 80; attempt++) {
     if (processInfo.child.exitCode !== null) throw new Error(`Service exited: ${processInfo.logs()}`);
-    try { if ((await fetch(url)).ok) return; } catch { /* starting */ }
+    try { if ((await fetch(url, { signal: AbortSignal.timeout(3000) })).ok) return; } catch { /* starting */ }
     await new Promise(resolve => setTimeout(resolve, 500));
   }
   throw new Error(`Service did not start at ${url}: ${processInfo.logs()}`);
@@ -47,6 +47,13 @@ const web = server(process.platform === 'win32' ? 'npm.cmd' : 'npm',
 async function register(person) {
   const context = await browser.newContext();
   const page = await context.newPage();
+  page.setDefaultTimeout(10000);
+  page.setDefaultNavigationTimeout(15000);
+  page.on('pageerror', error => console.error(`${person.role} page error:`, error));
+  page.on('response', response => {
+    if (response.status() >= 400 && response.url().includes('/api/'))
+      console.error(`${person.role} API ${response.status()}: ${response.url()}`);
+  });
   pages.push(page);
   await page.goto(webOrigin);
   await page.getByRole('button', { name: 'Create account' }).first().click();
@@ -56,6 +63,7 @@ async function register(person) {
   await page.getByLabel('Account role').selectOption(person.role);
   await page.locator('form').getByRole('button', { name: 'Create account' }).click();
   await page.getByRole('heading', { name: 'Your projects' }).waitFor();
+  console.log(`${person.role}: registered and signed in`);
   return page;
 }
 
@@ -65,6 +73,7 @@ const tab = (page, name) => page.locator('nav[aria-label="Project workflows"]')
 try {
   await mkdir(results, { recursive: true });
   await Promise.all([ready(apiOrigin + '/api/health', api), ready(webOrigin, web)]);
+  console.log('API and web servers are ready');
   browser = await chromium.launch({ headless: true });
   const homeowner = account('HOMEOWNER');
   const builder = account('BUILDER');
@@ -86,6 +95,7 @@ try {
     await ownerPage.getByRole('button', { name: 'Add member' }).click();
     await ownerPage.locator('ul').getByText(person.name).waitFor();
   }
+  console.log('HOMEOWNER: created project and added builder and procurement');
   assert.equal(await tab(ownerPage, 'Overview').getAttribute('aria-pressed'), 'true');
   await ownerPage.screenshot({ path: `${results}/homeowner-overview.png`, fullPage: true });
 
@@ -99,6 +109,7 @@ try {
   await builderPage.getByLabel('Estimated rate (₹)').fill('450');
   await builderPage.getByRole('button', { name: 'Add boq' }).click();
   await builderPage.getByRole('heading', { name: 'Cement' }).waitFor();
+  console.log('BUILDER: created BOQ item');
 
   await tab(builderPage, 'Milestones').click();
   await builderPage.getByLabel('Milestone title').fill('Foundation');
@@ -107,6 +118,7 @@ try {
   await builderPage.getByRole('button', { name: 'Add milestone' }).click();
   await builderPage.getByRole('button', { name: 'Submit for approval' }).click();
   await builderPage.getByText('AWAITING APPROVAL').waitFor();
+  console.log('BUILDER: submitted milestone');
 
   await tab(builderPage, 'Materials').click();
   await builderPage.getByLabel('BOQ item').selectOption({ index: 1 });
@@ -114,6 +126,7 @@ try {
   await builderPage.getByRole('button', { name: 'Create request' }).click();
   await builderPage.getByRole('status').getByText('Material request created').waitFor();
   assert.equal(await builderPage.getByRole('button', { name: 'Add supplier' }).count(), 0);
+  console.log('BUILDER: created material request');
 
   await procurementPage.reload();
   await procurementPage.getByRole('heading', { name: project }).waitFor();
@@ -132,6 +145,7 @@ try {
   await procurementPage.getByLabel('Tracking reference').fill('E2E-TRK-001');
   await procurementPage.getByRole('button', { name: 'Record dispatch' }).click();
   await procurementPage.getByRole('status').getByText('Dispatch recorded').waitFor();
+  console.log('PROCUREMENT: accepted request, quoted, ordered, and dispatched');
   assert.equal(await procurementPage.getByRole('button', { name: 'Record site receipt' }).count(), 0);
   await procurementPage.screenshot({ path: `${results}/procurement-dispatch.png`, fullPage: true });
 
@@ -143,6 +157,7 @@ try {
   await builderPage.getByRole('button', { name: 'Record site receipt' }).click();
   await builderPage.getByRole('status').getByText('Site receipt recorded').waitFor();
   await builderPage.getByText('RECEIVED').first().waitFor();
+  console.log('BUILDER: recorded site receipt');
   await builderPage.screenshot({ path: `${results}/builder-receipt.png`, fullPage: true });
 
   await ownerPage.reload();
@@ -154,13 +169,14 @@ try {
   await ownerPage.getByText('1 / 1').waitFor();
   const summary = await ownerPage.getByText('purchase commitments', { exact: false }).textContent();
   assert.match(summary || '', /₹4,000/);
+  console.log('HOMEOWNER: approved milestone and verified budget');
   await ownerPage.screenshot({ path: `${results}/homeowner-complete.png`, fullPage: true });
 
   console.log('Browser flow passed: registration, membership, BOQ, milestone approval, sourcing, dispatch, receipt, and homeowner overview.');
 } catch (error) {
   console.error(error);
   for (let index = 0; index < pages.length; index++) {
-    try { await pages[index].screenshot({ path: `${results}/failure-page-${index + 1}.png`, fullPage: true }); }
+    try { await pages[index].screenshot({ path: `${results}/failure-page-${index + 1}.png`, fullPage: true, timeout: 10000 }); }
     catch { /* page may already be closed */ }
   }
   console.error('API logs:', api.logs());
