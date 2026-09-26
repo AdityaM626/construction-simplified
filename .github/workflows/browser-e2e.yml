@@ -1,0 +1,54 @@
+name: Browser end-to-end
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-flow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: postgresql://construction:construction@localhost:5432/construction_ci?schema=public
+      JWT_SECRET: ci-browser-secret-must-be-at-least-32-characters
+      VITE_API_BASE_URL: http://127.0.0.1:4000/api
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: construction
+          POSTGRES_PASSWORD: construction
+          POSTGRES_DB: construction_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U construction -d construction_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run db:migrate
+      - run: npm run build
+      - name: Install pinned browser automation and Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Exercise the four-persona browser flow
+        timeout-minutes: 5
+        run: node scripts/test-browser-flow.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-flow-screenshots
+          path: test-results/browser-flow/
+          retention-days: 14
