@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
@@ -67,6 +67,21 @@ async function register(person) {
   return page;
 }
 
+async function signIn(person) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  page.setDefaultTimeout(10000);
+  page.setDefaultNavigationTimeout(15000);
+  pages.push(page);
+  await page.goto(webOrigin);
+  await page.getByLabel('Email').fill(person.email);
+  await page.getByLabel('Password').fill(password);
+  await page.locator('form').getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('heading', { name: 'Your projects' }).waitFor();
+  console.log(`${person.role}: signed in`);
+  return page;
+}
+
 const tab = (page, name) => page.locator('nav[aria-label="Project workflows"]')
   .getByRole('button', { name, exact: true });
 
@@ -78,9 +93,15 @@ try {
   const homeowner = account('HOMEOWNER');
   const builder = account('BUILDER');
   const procurement = account('PROCUREMENT');
+  const admin = account('ADMIN');
+  execFileSync(process.execPath, ['apps/api/dist/create-admin.js'], {
+    env: { ...process.env, ADMIN_EMAIL: admin.email, ADMIN_NAME: admin.name,
+      ADMIN_PASSWORD: password }
+  });
   const ownerPage = await register(homeowner);
   const builderPage = await register(builder);
   const procurementPage = await register(procurement);
+  const adminPage = await signIn(admin);
 
   const project = `E2E Residence ${suffix}`;
   await ownerPage.getByLabel('Project name').fill(project);
@@ -98,6 +119,13 @@ try {
   console.log('HOMEOWNER: created project and added builder and procurement');
   assert.equal(await tab(ownerPage, 'Overview').getAttribute('aria-pressed'), 'true');
   await ownerPage.screenshot({ path: `${results}/homeowner-overview.png`, fullPage: true });
+
+  await adminPage.reload();
+  await adminPage.getByRole('heading', { name: project }).waitFor();
+  await tab(adminPage, 'Activity').click();
+  await adminPage.getByRole('heading', { name: 'Activity' }).waitFor();
+  console.log('ADMIN: viewed the project and activity without membership');
+  await adminPage.screenshot({ path: `${results}/admin-activity.png`, fullPage: true });
 
   await builderPage.reload();
   await builderPage.getByRole('heading', { name: project }).waitFor();
@@ -172,7 +200,7 @@ try {
   console.log('HOMEOWNER: approved milestone and verified budget');
   await ownerPage.screenshot({ path: `${results}/homeowner-complete.png`, fullPage: true });
 
-  console.log('Browser flow passed: registration, membership, BOQ, milestone approval, sourcing, dispatch, receipt, and homeowner overview.');
+  console.log('Browser flow passed: four roles, registration, membership, BOQ, milestone approval, sourcing, dispatch, receipt, and homeowner overview.');
 } catch (error) {
   console.error(error);
   for (let index = 0; index < pages.length; index++) {
